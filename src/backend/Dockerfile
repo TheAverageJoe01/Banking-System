@@ -26,8 +26,14 @@ RUN pip install poetry && poetry install
 # Copy the source code into the container.
 COPY . .
 
+# Copy database
+COPY bank.db /backend
+
 # Expose the port that the application listens on.
 EXPOSE 8000
 
+# Migrate database
+CMD poetry run alembic upgrade head
+
 # Run the application.
-CMD poetry run python3 test.py # --host=0.0.0.0 --port=8000
+CMD poetry run uvicorn main:app --reload --host=0.0.0.0 --port=8000 
