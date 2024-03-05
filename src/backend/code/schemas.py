@@ -2,9 +2,9 @@ from pydantic import BaseModel
 
 
 class UserBase(BaseModel):
-    name: str 
     email: str
-    postCode: str
+    #name: str 
+    #postCode: str
     #DoB: Optional[Date] = None
 
 class UserCreate(UserBase):
@@ -13,6 +13,9 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     is_active: bool
+    #name: str
+    #postCode: str
+    #DoB: Optional[Date] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
