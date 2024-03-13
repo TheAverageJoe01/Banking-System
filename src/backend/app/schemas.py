@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 
 
@@ -14,3 +15,8 @@ class User(UserBase):
 
     class Config:
         from_attributes = True
+
+class UserUpdate(BaseModel):
+    email: Optional[str] = None
+    password: Optional[str] = None
+    is_active: Optional[bool] = None
