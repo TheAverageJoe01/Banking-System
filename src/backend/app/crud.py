@@ -19,3 +19,13 @@ def create_user(db:Session, user: schemas.UserCreate):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+def get_details(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Details).offset(skip).limit(limit).all()
+
+def create_user_details(db:Session, details: schemas.DetailCreate, user_id: int):
+    db_detail = models.Details(**details.dict(), user_id=user_id)
+    db.add(db_detail)
+    db.commit()
+    db.refresh(db_detail)
+    return db_detail
