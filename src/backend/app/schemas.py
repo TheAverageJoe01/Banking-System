@@ -2,6 +2,19 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class DetailBase(BaseModel):
+    balance: int
+
+class DetailCreate(DetailBase):
+    pass
+
+class Detail(DetailBase):
+    id: int
+    user_id: int
+
+    class Config:
+        from_attributes = True
+
 class UserBase(BaseModel):
     email: str
 
