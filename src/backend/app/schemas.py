@@ -6,57 +6,39 @@ from .schemas import Account
 # TRANSACTION SCHEMAS
 # -----------------------------------------------------------------------------
 class transactionBase(BaseModel):
-    id: int
-    user_id: int
     amount: int
     date: str
     transaction_type: str
-    balance: float
 
 class createTransaction(transactionBase):
-    user_id: int
-    amount: int
-    date: str
-    transaction_type: str
     balance: float
 
 class Transaction(transactionBase):
     id: int
     user_id: int
-    amount: int
-    date: str
-    transactionType: str
-    balance: float
 
     class Config:
         from_attributes = True
 
 class updateTransaction(BaseModel):
     amount: Optional[int] = None
-    date: Optional[str] = None
-    transaction_type: Optional[str] = None
     balance: Optional[float] = None
 
 
 # ACCOUNT SCHEMAS
 # -----------------------------------------------------------------------------
 class accountBase(BaseModel):
-    id: int
     name: str
+    date: str
     balance: float
-    accountType: str
+    account_type: str
 
 
 class accountCreate(accountBase):
-    name: str
-    balance: float
-    accountType: str
+    pass
 
 class Account(accountBase):
     id: int
-    name: str
-    balance: float
-    accountType: str
     transaction = list[Transaction] = []
 
     class Config:
