@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Boolean, Column, Integer, String, Date, ForeignKey, Float
 from sqlalchemy.orm import relationship
 
 
@@ -6,7 +6,7 @@ from app.database import Base
 
 
 
-# Create a class that will be used to create the table in the database
+# Create a class that will be used to create a table of users in the database
 class User(Base):
     __tablename__ = 'users'
 
@@ -15,15 +15,30 @@ class User(Base):
     password = Column(String)
     is_active = Column(Boolean, default=True)
 
-    details = relationship("Details", back_populates="user")
+    account = relationship("Account", back_populates="User")
+    
+# Create a class that will be used to create a table of accounts in the database
+class Account(Base):
+    __tablename__ = "accounts"
 
-# Create a class that will be used to create a table to store user details and balance 
-class Details(Base):
-    __tablename__ = 'details'
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    balance = Column(float, index=True)
+    accountType = Column(String, index=True)
+
+    user = relationship("User", back_populates="Account")
+    transactions = relationship("Transaction", back_populates="Account")
+
+# Create a class that will be used to create a table of transactions in the database
+class Transaction(Base):
+    __tablename__ = 'transactions'
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'))
-    #date_of_birth = Column(Date)
-    balance = Column(Integer)
+    amount = Column(Integer)
+    date = Column(Date)
+    transactionType = Column(String)
+    balance = Column(Float)
 
-    user = relationship("User", back_populates="details")
+    Account = relationship("Account", back_populates="transactions")
+

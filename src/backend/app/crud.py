@@ -29,3 +29,9 @@ def create_user_details(db:Session, details: schemas.DetailCreate, user_id: int)
     db.commit()
     db.refresh(db_detail)
     return db_detail
+
+#Account crud
+def get_account_by_id(db:Session, id: int):
+    return db.query(models.Account).filter(models.Account.id == id).first()
+
+
