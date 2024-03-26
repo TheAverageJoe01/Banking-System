@@ -1,21 +1,20 @@
 from typing import Optional
-from pydantic import BaseModel, ConfigDict
-from .schemas import Account
-
+from pydantic import BaseModel
+from datetime import datetime
 
 # TRANSACTION SCHEMAS
 # -----------------------------------------------------------------------------
 class transactionBase(BaseModel):
     amount: int
     date: str
-    transaction_type: str
+    transactionType: str
 
 class createTransaction(transactionBase):
     balance: float
 
 class Transaction(transactionBase):
-    id: int
-    user_id: int
+    transactionID: int
+    accountID: int
 
     class Config:
         from_attributes = True
@@ -28,17 +27,17 @@ class updateTransaction(BaseModel):
 # ACCOUNT SCHEMAS
 # -----------------------------------------------------------------------------
 class accountBase(BaseModel):
-    name: str
     date: str
     balance: float
-    account_type: str
+    accountType: str
 
 
 class accountCreate(accountBase):
     pass
 
 class Account(accountBase):
-    id: int
+    accountID: int
+    userID: int
     transaction = list[Transaction] = []
 
     class Config:
@@ -53,6 +52,7 @@ class accountUpdate(BaseModel):
 # USER SCHEMAS
 # -----------------------------------------------------------------------------
 class userBase(BaseModel):
+    name: str
     email: str
 
 class userCreate(userBase):
@@ -60,7 +60,7 @@ class userCreate(userBase):
 
 class User(userBase):
     id: int
-    is_active: bool
+    isActive: bool
     accounts = list[Account] = []
 
     class Config:
@@ -69,4 +69,4 @@ class User(userBase):
 class userUpdate(BaseModel):
     email: Optional[str] = None
     password: Optional[str] = None
-    is_active: Optional[bool] = None
+    isActive: Optional[bool] = None

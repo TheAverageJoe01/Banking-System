@@ -10,35 +10,37 @@ from app.database import Base
 class User(Base):
     __tablename__ = 'users'
 
+    name = Column(String, index=True)
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     password = Column(String)
-    is_active = Column(Boolean, default=True)
+    isActive = Column(Boolean, default=True)
 
-    account = relationship("Account", back_populates="User")
+    accounts = relationship("Account", back_populates="user")
     
 # Create a class that will be used to create a table of accounts in the database
 class Account(Base):
     __tablename__ = "accounts"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    balance = Column(float, index=True)
+    accountID = Column(Integer, primary_key=True, index=True)
+    balance = Column(Float, index=True)
     accountType = Column(String, index=True)
+    userID = Column(Integer, ForeignKey('users.id'))
 
-    user = relationship("User", back_populates="Account")
-    transactions = relationship("Transaction", back_populates="Account")
+    user = relationship("User", back_populates="accounts")
+    transactions = relationship("Transaction", back_populates="account")
 
 # Create a class that will be used to create a table of transactions in the database
 class Transaction(Base):
     __tablename__ = 'transactions'
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('users.id'))
-    amount = Column(Integer)
+    transactionID = Column(Integer, primary_key=True, index=True)
+    accountID = Column(Integer, ForeignKey('accounts.accountID'))
+    amount = Column(Float)
     date = Column(Date)
     transactionType = Column(String)
     balance = Column(Float)
 
-    Account = relationship("Account", back_populates="transactions")
+    accountID = Column(Integer, ForeignKey('accounts.id'))
+    account = relationship("Account", back_populates="transactions")
 

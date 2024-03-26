@@ -1,37 +1,69 @@
 from sqlalchemy.orm import Session
-
+from fastapi import HTTPException
 from . import models,schemas
 
+# User crud
+# --------------------------------------------------------------------------------
+def getUser(db: Session, userID: int):
+    return db.query(models.User).filter(models.User.id == userID).first()
 
-def get_user(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id == user_id).first()
 
-
-def get_user_by_email(db: Session, email: str):
+def getUserByEmail(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
-def get_users(db: Session, skip: int = 0, limit: int = 100):
+def getUsers(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
 
-def create_user(db:Session, user: schemas.UserCreate):
-    db_user = models.User(email=user.email, password=user.password)
-    db.add(db_user)
+def createUser(db:Session, user: schemas.userCreate):
+    dbUser = models.User(name=user.name,email=user.email,password=user.password)
+    db.add(dbUser)
     db.commit()
-    db.refresh(db_user)
-    return db_user
+    db.refresh(dbUser)
+    return dbUser
 
-def get_details(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Details).offset(skip).limit(limit).all()
 
-def create_user_details(db:Session, details: schemas.DetailCreate, user_id: int):
-    db_detail = models.Details(**details.dict(), user_id=user_id)
-    db.add(db_detail)
+# Account crud
+# --------------------------------------------------------------------------------
+def getAccounts(db: Session, userID: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Account).filter(models.Account.userID == userID).offset(skip).limit(limit).all()
+
+def getAccountByType(db: Session, userID: int, accountType: str):
+    return db.query(models.Account).filter(models.Account.userID == userID).filter(models.Account.accountType == accountType).all()
+
+def createAccount(db: Session, account: schemas.accountCreate):
+    dbAccount = models.Account(date=account.date, balance=account.balance, type=account.accountType)
+    db.add(dbAccount)
     db.commit()
-    db.refresh(db_detail)
-    return db_detail
+    db.refresh(dbAccount)
+    return dbAccount
 
-#Account crud
-def get_account_by_id(db:Session, id: int):
-    return db.query(models.Account).filter(models.Account.id == id).first()
+# Transfer crud
+# --------------------------------------------------------------------------------
+def depositToAccount(db: Session, accountID: int, amount: float):
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be greater than 0")
+    account = db.query(models.Account).filter(models.Account.accountID == accountID).first()
+    if account:
+        account.balance += amount
+        db.commit()
+        db.refresh(account)
+        return account
+    else:
+        raise HTTPException(status_code=404, detail="Account not found")
 
-
+def withdrawFromAccount(db: Session, accountID: int, amount: float):
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be greater than 0")
+    account = db.query(models.Account).filter(models.Account.accountID == accountID).first()
+    if account and account.balance >= amount:
+        account.balance -= amount
+        db.commit()
+        db.refresh(account)
+        return account
+    else:
+        raise HTTPException(status_code=400, detail="Transfer failed due to insufficient funds or invalid account")
+    
+def transferFromAccount(db: Session, accountID: int, amount: float):
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be greater than 0")
+    account = db.query(models.Account).filter(models.Account.accountID == accountID).first()

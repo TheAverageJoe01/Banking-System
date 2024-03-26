@@ -11,7 +11,7 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 #Dependencies
-def get_db():
+def getDB():
     db= SessionLocal()
     try:
         yield db
@@ -19,62 +19,86 @@ def get_db():
         db.close()
 
 
-@app.post("/users/", response_model=schemas.User, status_code=201)
+# User
+# --------------------------------------------------------------------------------------
+@app.post("/users/", responseModel=schemas.User, status_code=201)
 #Endpoint to receive input data
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, email=user.email)
-    if db_user:
+def createUser(user: schemas.UserCreate, db: Session = Depends(getDB)):
+    dbUser = crud.getUserByEmail(db, email=user.email)
+    if dbUser:
         raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db=db, user=user)
+    return crud.createUser(db=db, user=user)
 
 
 
-@app.get("/users/", response_model=list[schemas.User])
-def read_users(skip: int=0, limit: int=100, db: Session = Depends(get_db)):
-    users = crud.get_users(db, skip=skip, limit=limit)
+@app.get("/users/", responseModel=list[schemas.User])
+def readUsers(skip: int=0, limit: int=100, db: Session = Depends(getDB)):
+    users = crud.getUsers(db, skip=skip, limit=limit)
     return users #could be this?
 
-@app.get("/users/{user_id}", response_model=schemas.User)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = crud.get_user(db,user_id=user_id)
-    if db_user is None:
+@app.get("/users/{userID}", responseModel=schemas.User)
+def readUser(userID: int, db: Session = Depends(getDB)):
+    dbUser = crud.getUser(db,userID=userID)
+    if dbUser is None:
         raise HTTPException(status_code=404, detail = "User not found")
-    return db_user
+    return dbUser
 
-@app.put("/users/{user_id}", response_model=schemas.User)
-def edit_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Depends(get_db)):
+@app.put("/users/{userID}", responseModel=schemas.User)
+def editUser(userID: int, updateUser: schemas.userUpdate, db: Session = Depends(getDB)):
     # Retrieve the existing user from the database
-    db_user = crud.get_user(db, user_id=user_id)
-    if db_user is None:
+    dbUser = crud.getUser(db, userID=userID)
+    if dbUser is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Update model instance with the data from UserUpdate schema
-    user_data = user_update.dict(exclude_unset=True)
-    for key, value in user_data.items():
-        setattr(db_user, key, value)
+    # Update model instance with the data from userUpdate schema
+    userData = updateUser.dict(exclude_unset=True)
+    for key, value in userData.items():
+        setattr(dbUser, key, value)
 
     db.commit()
-    db.refresh(db_user)
+    db.refresh(dbUser)
 
-    return db_user
+    return dbUser
 
-@app.delete("/users/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db)):
+@app.delete("/users/{userID}")
+def deleteUser(userID: int, db: Session = Depends(getDB)):
 
-        db_user = crud.get_user(db, user_id=user_id)
-        if db_user is None:
-            raise HTTPException(status_code=404, detail="User not found")
+    dbUser = crud.getUser(db, userID=userID)
+    if dbUser is None:
+        raise HTTPException(status_code=404, detail="User not found")
         
-        db.delete(db_user)
-        db.commit()
-        return {"ok": True}
+    db.delete(dbUser)
+    db.commit()
+    return {"ok": True}
 
-@app.post("/users/{user_id}/details/", response_model=schemas.Detail, status_code=201)
-def create_user_details(
-    user_id: int, details: schemas.DetailCreate, db: Session = Depends(get_db)):
-    return crud.create_user_details(db=db, details=details, user_id=user_id)
+# Account
+# --------------------------------------------------------------------------------------
+@app.post("/accounts/{userID}", responseModel=schemas.Account, status_code=201)
+#Endpoint to receive input data
+def createAccount(account: schemas.accountCreate, db: Session = Depends(getDB)):
+    dbAccount = crud.getAccountByType(db, userID=account.userID, accountType=account.accountType)
+    if dbAccount:
+        raise HTTPException(status_code=400, detail="Account with this type and user already exists")
+    return crud.createAccount(db=db, account=account)
 
-@app.get("/details/", response_model=list[schemas.Detail])
-def read_details(skip: int=0, limit: int=100, db: Session = Depends(get_db)):
-    details = crud.get_details(db, skip=skip, limit=limit)
-    return details
+@app.get("/accounts/{userID}", responseModel=list[schemas.Account])
+def readAccountsByUserID(skip: int=0, limit: int=100, db: Session = Depends(getDB)):
+    accounts = crud.getAccounts(db, skip=skip, limit=limit)
+    return accounts
+
+@app.get("/accounts/{userID}/{accountType}", responseModel=list[schemas.Account])
+def readAccountByType(accountType: str, db: Session = Depends(getDB)):
+    dbAccount = crud.getAccountByType(db, accountType==accountType)
+    if dbAccount is None:
+        raise HTTPException(status_code=404, detail = "User not found")
+    return dbAccount
+
+
+# DEPOSIT/WITHDRAW
+# --------------------------------------------------------------------------------------
+@app.post("/accounts/{accountID}/deposit/", responseModel=list[schemas.Account])
+def deposit(accountID: int, amount: float, db: Session = Depends(getDB)):
+    account_deposit = crud.depositToAccount(db, balance=amount)
+    if account_deposit is None:
+        raise HTTPException(status_code = 404, detail = "User not found")
+    return account_deposit
