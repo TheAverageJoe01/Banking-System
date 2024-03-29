@@ -31,7 +31,18 @@ def getAccountByType(db: Session, userID: int, accountType: str):
     return db.query(models.Account).filter(models.Account.userID == userID).filter(models.Account.accountType == accountType).all()
 
 def createAccount(db: Session, account: schemas.accountCreate):
-    dbAccount = models.Account(date=account.date, balance=account.balance, type=account.accountType)
+    # create a query to find account id 
+    
+    #last_account = db.query(models.Account).order_by(models.Account.id.desc()).first()
+    #if last_account:
+        #accountNumber = last_account.accountNumber + 1
+    #else:
+        #accountNumber = 1
+
+    accountNumber = db.query(models.Account).filter(models.Account.userID==account.userID).count() + 1
+    
+
+    dbAccount = models.Account(balance = account.balance, accountType = account.accountType, userID = account.userID, accountNumber = accountNumber)
     db.add(dbAccount)
     db.commit()
     db.refresh(dbAccount)
@@ -42,7 +53,7 @@ def createAccount(db: Session, account: schemas.accountCreate):
 def depositToAccount(db: Session, accountID: int, amount: float):
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than 0")
-    account = db.query(models.Account).filter(models.Account.accountID == accountID).first()
+    account = db.query(models.Account).filter(models.Account.id == accountID).first()
     if account:
         account.balance += amount
         db.commit()
@@ -54,7 +65,7 @@ def depositToAccount(db: Session, accountID: int, amount: float):
 def withdrawFromAccount(db: Session, accountID: int, amount: float):
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than 0")
-    account = db.query(models.Account).filter(models.Account.accountID == accountID).first()
+    account = db.query(models.Account).filter(models.Account.id == accountID).first()
     if account and account.balance >= amount:
         account.balance -= amount
         db.commit()
@@ -66,4 +77,4 @@ def withdrawFromAccount(db: Session, accountID: int, amount: float):
 def transferFromAccount(db: Session, accountID: int, amount: float):
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than 0")
-    account = db.query(models.Account).filter(models.Account.accountID == accountID).first()
+    account = db.query(models.Account).filter(models.Account.id == accountID).first()

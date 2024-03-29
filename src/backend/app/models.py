@@ -10,8 +10,8 @@ from app.database import Base
 class User(Base):
     __tablename__ = 'users'
 
-    name = Column(String, index=True)
     id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
     email = Column(String, unique=True, index=True)
     password = Column(String)
     isActive = Column(Boolean, default=True)
@@ -22,7 +22,8 @@ class User(Base):
 class Account(Base):
     __tablename__ = "accounts"
 
-    accountID = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    accountNumber = Column(Integer, index=True)
     balance = Column(Float, index=True)
     accountType = Column(String, index=True)
     userID = Column(Integer, ForeignKey('users.id'))
@@ -34,13 +35,12 @@ class Account(Base):
 class Transaction(Base):
     __tablename__ = 'transactions'
 
-    transactionID = Column(Integer, primary_key=True, index=True)
-    accountID = Column(Integer, ForeignKey('accounts.accountID'))
+    id = Column(Integer, primary_key=True, index=True)
+    accountID = Column(Integer, ForeignKey('accounts.id'))
     amount = Column(Float)
     date = Column(Date)
     transactionType = Column(String)
     balance = Column(Float)
 
-    accountID = Column(Integer, ForeignKey('accounts.id'))
     account = relationship("Account", back_populates="transactions")
 

@@ -27,18 +27,20 @@ class updateTransaction(BaseModel):
 # ACCOUNT SCHEMAS
 # -----------------------------------------------------------------------------
 class accountBase(BaseModel):
-    date: str
+    #date: str
     balance: float
     accountType: str
+    accountNumber: int
+    userID: int
 
 
 class accountCreate(accountBase):
+    #accountNumber: int
     pass
 
 class Account(accountBase):
-    accountID: int
-    userID: int
-    transaction = list[Transaction] = []
+    pass
+    #transaction = list[Transaction] = []
 
     class Config:
         from_attributes = True
@@ -61,7 +63,7 @@ class userCreate(userBase):
 class User(userBase):
     id: int
     isActive: bool
-    accounts = list[Account] = []
+    #accounts = list[Account] = []
 
     class Config:
         from_attributes = True
