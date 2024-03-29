@@ -1,35 +1,74 @@
 from typing import Optional
 from pydantic import BaseModel
+from datetime import datetime
+
+# TRANSACTION SCHEMAS
+# -----------------------------------------------------------------------------
+class transactionBase(BaseModel):
+    amount: int
+    date: str
+    transactionType: str
+
+class createTransaction(transactionBase):
+    balance: float
+
+class Transaction(transactionBase):
+    transactionID: int
+    accountID: int
+
+    class Config:
+        from_attributes = True
+
+class updateTransaction(BaseModel):
+    amount: Optional[int] = None
+    balance: Optional[float] = None
 
 
-class DetailBase(BaseModel):
-    balance: int
+# ACCOUNT SCHEMAS
+# -----------------------------------------------------------------------------
+class accountBase(BaseModel):
+    #date: str
+    balance: float
+    accountType: str
+    accountNumber: int
+    userID: int
 
-class DetailCreate(DetailBase):
+
+class accountCreate(accountBase):
+    #accountNumber: int
     pass
 
-class Detail(DetailBase):
-    id: int
-    user_id: int
+class Account(accountBase):
+    pass
+    #transaction = list[Transaction] = []
 
     class Config:
         from_attributes = True
 
-class UserBase(BaseModel):
+class accountUpdate(BaseModel):
+    name: Optional[str] = None
+    balance: Optional[float] = None
+
+
+
+# USER SCHEMAS
+# -----------------------------------------------------------------------------
+class userBase(BaseModel):
+    name: str
     email: str
 
-
-class UserCreate(UserBase):
+class userCreate(userBase):
     password: str
 
-class User(UserBase):
+class User(userBase):
     id: int
-    is_active: bool
+    isActive: bool
+    #accounts = list[Account] = []
 
     class Config:
         from_attributes = True
 
-class UserUpdate(BaseModel):
+class userUpdate(BaseModel):
     email: Optional[str] = None
     password: Optional[str] = None
-    is_active: Optional[bool] = None
+    isActive: Optional[bool] = None
