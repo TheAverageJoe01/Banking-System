@@ -8,6 +8,7 @@ engine = create_engine(
     database, connect_args={"check_same_thread": False}
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+#Initalises the database to store customer information and data
 
 Base = declarative_base()
 
