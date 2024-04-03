@@ -134,9 +134,16 @@ def readAccountByType(accountType: str, userID, db: Session = Depends(getDB)):
 
 # DEPOSIT/WITHDRAW
 # --------------------------------------------------------------------------------------
-@app.post("/accounts/{accountID}/deposit/", response_model=list[schemas.Account])
-def deposit(accountID: int, amount: float, db: Session = Depends(getDB)):
-    account_deposit = crud.depositToAccount(db, balance=amount)
+@app.post("/accounts/{userID}/deposit/{accountNumber}", response_model=schemas.Account)
+def deposit(userID: int, accountNumber: int, amount: float, db: Session = Depends(getDB)):
+    account_deposit = crud.depositToAccount(db, userID = userID, accountNumber = accountNumber, amount=amount)
     if account_deposit is None:
-        raise HTTPException(status_code = 404, detail = "User not found")
+        raise HTTPException(status_code = 404, detail = "User or Account not found")
     return account_deposit
+
+@app.post("/accounts/{userID}/withdraw/{accountNumber}", response_model=schemas.Account)
+def withdraw(userID: int, accountNumber: int, amount: float, db: Session = Depends(getDB)):
+    account_withdraw = crud.withdrawFromAccount(db, userID = userID, accountNumber = accountNumber, amount=amount)
+    if account_withdraw is None:
+        raise HTTPException(status_code = 404, detail = "User or Account not found")
+    return account_withdraw
