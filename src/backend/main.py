@@ -1,5 +1,11 @@
-from fastapi import Depends, FastAPI, HTTPException
+from typing import Annotated
+
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+
+from passlib.context import CryptContext
+passwordContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 from app import crud, models, schemas
@@ -10,14 +16,16 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-#Dependencies
+# Dependencies
 def getDB():
-    db= SessionLocal()
+    db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
 
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # User
 # --------------------------------------------------------------------------------------
@@ -74,6 +82,27 @@ def deleteUser(userID: int, db: Session = Depends(getDB)):
     db.commit()
     return {"ok": True}
 #Gets the user specified, and then deletes the user from the database, if no user found, displays error
+
+# Login 
+# --------------------------------------------------------------------------------------
+
+@app.post("/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(getDB)):
+    # Attempt to retrieve the user by username/email
+    user = db.query(models.User).filter(models.User.email == form_data.username).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect username or password")
+    
+    # Verify the provided password against the stored hash
+    if not passwordContext.verify(form_data.password, user.password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect username or password")
+    
+    return {"access_token": user.email, "token_type": "bearer"}
+#A login function to allow users to login to their account. Creates a form where the user inputs their email and password
+#and then compares the email in the form to the database and see if there are any matches, if there is, then hashes
+#the password inputted by the user in the form, and compares that hashed password to the one in the account when the user
+#created the account
+
 
 # Account
 # --------------------------------------------------------------------------------------

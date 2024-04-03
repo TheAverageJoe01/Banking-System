@@ -1,12 +1,19 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from . import models,schemas
+from passlib.context import CryptContext
+
+
+# For reference for the passlib:
+# https://passlib.readthedocs.io/en/stable/lib/passlib.context.html
+
+passwordContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # User crud
 # --------------------------------------------------------------------------------
 def getUser(db: Session, userID: int):
     return db.query(models.User).filter(models.User.id == userID).first()
-#Function to get user via userID that is inputed by the user
+#Function to get user via userID that is inputted by the user
 
 
 def getUserByEmail(db: Session, email: str):
@@ -17,8 +24,9 @@ def getUsers(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
 #Function to get the first 100 users
 
-def createUser(db:Session, user: schemas.userCreate):
-    dbUser = models.User(name=user.name,email=user.email,password=user.password)
+def createUser(db:Session, user: schemas.userCreate): #if hashed password doesn't work this could be why
+    hashedPassword = passwordContext.hash(user.password)
+    dbUser = models.User(name=user.name,email=user.email,password=hashedPassword)
     db.add(dbUser)
     db.commit()
     db.refresh(dbUser)
@@ -62,7 +70,7 @@ def createAccount(db: Session, account: schemas.accountCreate):
 def depositToAccount(db: Session, accountID: int, amount: float):
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than 0")
-    account = db.query(models.Account).filter(models.Account.id == accountID).first()
+    account = db.query(models.Account).filter(models.Account.accountNumber == accountID).first()
     if account:
         account.balance += amount
         db.commit()
