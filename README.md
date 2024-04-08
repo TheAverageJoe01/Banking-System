@@ -30,9 +30,5 @@ uvicorn app.main:app --reload
 
 Once the server is running, you can access the API documentation at http://localhost:8000/docs to interact with the endpoints using Swagger UI.
 
-# License
-
-This project is licensed under the UoL License - see the LICENSE file for details.
-
 ## Countdown 
 // add count down here 
