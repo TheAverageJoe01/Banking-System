@@ -67,10 +67,13 @@ def createAccount(db: Session, account: schemas.accountCreate):
 
 # Transfer crud
 # --------------------------------------------------------------------------------
-def depositToAccount(db: Session, accountID: int, amount: float):
+def depositToAccount(db: Session, userID: int, accountNumber: int, amount: float):
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than 0")
-    account = db.query(models.Account).filter(models.Account.accountNumber == accountID).first()
+    account = db.query(models.Account).filter(
+        models.Account.userID == userID, 
+        models.Account.accountNumber == accountNumber
+    ).first()
     if account:
         account.balance += amount
         db.commit()
@@ -81,10 +84,13 @@ def depositToAccount(db: Session, accountID: int, amount: float):
 #Function to deposit funds into a users account, user selects the amount to deposit and the accountID for the
 #account, and checks whether the deposit is greater than 0
 
-def withdrawFromAccount(db: Session, accountID: int, amount: float):
+def withdrawFromAccount(db: Session, userID: int, accountNumber: int, amount: float):
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than 0")
-    account = db.query(models.Account).filter(models.Account.id == accountID).first()
+    account = db.query(models.Account).filter(
+        models.Account.userID == userID, 
+        models.Account.accountNumber == accountNumber
+    ).first()
     if account and account.balance >= amount:
         account.balance -= amount
         db.commit()

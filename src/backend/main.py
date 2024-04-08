@@ -29,7 +29,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # User
 # --------------------------------------------------------------------------------------
-@app.post("/users/", response_model=schemas.User, status_code=201)
+@app.post("/users/", response_model=schemas.User, status_code=201, tags=["Users"])
 #Endpoint to receive input data
 def createUser(user: schemas.userCreate, db: Session = Depends(getDB)):
     dbUser = crud.getUserByEmail(db, email = user.email)
@@ -40,13 +40,13 @@ def createUser(user: schemas.userCreate, db: Session = Depends(getDB)):
 #function to create a new user
 
 
-@app.get("/users/", response_model=list[schemas.User])
+@app.get("/users/", response_model=list[schemas.User], tags=["Users"])
 def readUsers(skip: int=0, limit: int=100, db: Session = Depends(getDB)):
     users = crud.getUsers(db, skip=skip, limit=limit)
     return users 
 #Uses the user schema and the readusers function to get up to the first 100 users from the database
 
-@app.get("/users/{userID}", response_model=schemas.User)
+@app.get("/users/{userID}", response_model=schemas.User, tags=["Users"])
 def readUser(userID: int, db: Session = Depends(getDB)):
     dbUser = crud.getUser(db,userID=userID)
     if dbUser is None:
@@ -54,7 +54,7 @@ def readUser(userID: int, db: Session = Depends(getDB)):
     return dbUser
 #Uses the getUser function from crud to get a user specified by a unique userID, if not found displays an error
 
-@app.put("/users/{userID}", response_model=schemas.User)
+@app.put("/users/{userID}", response_model=schemas.User, tags=["Users"])
 def editUser(userID: int, updateUser: schemas.userUpdate, db: Session = Depends(getDB)):
     # Retrieve the existing user from the database
     dbUser = crud.getUser(db, userID=userID)
@@ -71,7 +71,7 @@ def editUser(userID: int, updateUser: schemas.userUpdate, db: Session = Depends(
 
     return dbUser
 
-@app.delete("/users/{userID}")
+@app.delete("/users/{userID}", tags=["Users"])
 def deleteUser(userID: int, db: Session = Depends(getDB)):
 
     dbUser = crud.getUser(db, userID=userID)
@@ -86,7 +86,7 @@ def deleteUser(userID: int, db: Session = Depends(getDB)):
 # Login 
 # --------------------------------------------------------------------------------------
 
-@app.post("/token")
+@app.post("/token", tags=["Login"])
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(getDB)):
     # Attempt to retrieve the user by username/email
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
@@ -106,7 +106,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
 
 # Account
 # --------------------------------------------------------------------------------------
-@app.post("/accounts/{userID}", response_model=schemas.Account, status_code=201)
+@app.post("/accounts/{userID}", response_model=schemas.Account, status_code=201, tags=["Accounts"])
 #Endpoint to receive input data
 def createAccount(account: schemas.accountCreate, db: Session = Depends(getDB)):
     # dbAccount = crud.getAccountByType(db, userID=account.userID, accountType=account.accountType)
@@ -116,13 +116,13 @@ def createAccount(account: schemas.accountCreate, db: Session = Depends(getDB)):
 #Creates account by using the account schema to structure the data, uses the createAccount function to set the
 #variables to a value
 
-@app.get("/accounts/{userID}", response_model=list[schemas.Account])
+@app.get("/accounts/{userID}", response_model=list[schemas.Account], tags=["Accounts"])
 def readAccountsByUserID(userID: int, skip: int=0, limit: int=100, db: Session = Depends(getDB)):
     accounts = crud.getAccounts(db, userID, skip=skip, limit=limit)
     return accounts
 #Gets a specific account from the database using the UserID specified by the user using the getAccounts function
 
-@app.get("/accounts/{userID}/{accountType}", response_model=list[schemas.Account])
+@app.get("/accounts/{userID}/{accountType}", response_model=list[schemas.Account], tags=["Accounts"])
 def readAccountByType(accountType: str, userID, db: Session = Depends(getDB)):
     dbAccount = crud.getAccountByType(db, userID, accountType)
     if dbAccount is None:
@@ -134,9 +134,16 @@ def readAccountByType(accountType: str, userID, db: Session = Depends(getDB)):
 
 # DEPOSIT/WITHDRAW
 # --------------------------------------------------------------------------------------
-@app.post("/accounts/{accountID}/deposit/", response_model=list[schemas.Account])
-def deposit(accountID: int, amount: float, db: Session = Depends(getDB)):
-    account_deposit = crud.depositToAccount(db, balance=amount)
+@app.post("/accounts/{userID}/deposit/{accountNumber}", response_model=schemas.Account, tags=["Transactions"])
+def deposit(userID: int, accountNumber: int, amount: float, db: Session = Depends(getDB)):
+    account_deposit = crud.depositToAccount(db, userID = userID, accountNumber = accountNumber, amount=amount)
     if account_deposit is None:
-        raise HTTPException(status_code = 404, detail = "User not found")
+        raise HTTPException(status_code = 404, detail = "User or Account not found")
     return account_deposit
+
+@app.post("/accounts/{userID}/withdraw/{accountNumber}", response_model=schemas.Account, tags=["Transactions"])
+def withdraw(userID: int, accountNumber: int, amount: float, db: Session = Depends(getDB)):
+    account_withdraw = crud.withdrawFromAccount(db, userID = userID, accountNumber = accountNumber, amount=amount)
+    if account_withdraw is None:
+        raise HTTPException(status_code = 404, detail = "User or Account not found")
+    return account_withdraw
