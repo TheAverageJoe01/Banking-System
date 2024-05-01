@@ -1,6 +1,7 @@
-from sqlalchemy import Boolean, Column, Integer, String, Date, ForeignKey, Float
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, ForeignKey, Float
 from sqlalchemy.orm import relationship
 
+from datetime import datetime
 
 from app.database import Base
 
@@ -42,7 +43,7 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     accountID = Column(Integer, ForeignKey('accounts.id'))
     amount = Column(Float)
-    date = Column(Date)
+    date = Column(DateTime, default=datetime.utcnow)
     transactionType = Column(String)
     balance = Column(Float)
 

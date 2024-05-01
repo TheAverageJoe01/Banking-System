@@ -67,39 +67,79 @@ def createAccount(db: Session, account: schemas.accountCreate):
 
 # Transfer crud
 # --------------------------------------------------------------------------------
+#Function to deposit funds into a users account, user selects the amount to deposit and the accountID for the
+#account, and checks whether the deposit is greater than 0
 def depositToAccount(db: Session, userID: int, accountNumber: int, amount: float):
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than 0")
+    
+    # Querying the account
     account = db.query(models.Account).filter(
         models.Account.userID == userID, 
         models.Account.accountNumber == accountNumber
     ).first()
+    
     if account:
+        # Updating the account balance
         account.balance += amount
+        
+        # Creating a transaction object
+        transaction = models.Transaction(
+            accountID=account.id,
+            amount=amount,
+            transactionType="deposit",
+            balance=account.balance  # Assuming balance after deposit
+        )
+        
+        # Adding the transaction to the session
+        db.add(transaction)
+        
+        # Committing the changes
         db.commit()
+        
+        # Refreshing the account object to reflect the changes
         db.refresh(account)
-        return account
+        
+        return transaction
     else:
         raise HTTPException(status_code=404, detail="Account not found")
-#Function to deposit funds into a users account, user selects the amount to deposit and the accountID for the
-#account, and checks whether the deposit is greater than 0
 
+#Function to withdraw funds from an account using the same method as withdraw, except it also checks that
+#the account has more than the withdraw amount
 def withdrawFromAccount(db: Session, userID: int, accountNumber: int, amount: float):
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than 0")
+    
+    # Querying the account
     account = db.query(models.Account).filter(
         models.Account.userID == userID, 
         models.Account.accountNumber == accountNumber
     ).first()
+    
     if account and account.balance >= amount:
+        # Updating the account balance
         account.balance -= amount
+        
+        # Creating a transaction object
+        transaction = models.Transaction(
+            accountID=account.id,
+            amount=-amount,  # Negative amount for withdrawal
+            transactionType="withdrawal",
+            balance=account.balance  # Assuming balance after withdrawal
+        )
+        
+        # Adding the transaction to the session
+        db.add(transaction)
+        
+        # Committing the changes
         db.commit()
+        
+        # Refreshing the account object to reflect the changes
         db.refresh(account)
-        return account
+        
+        return transaction
     else:
         raise HTTPException(status_code=400, detail="Transfer failed due to insufficient funds or invalid account")
-#Function to withdraw funds from an account using the same method as withdraw, except it also checks that
-#the account has more than the withdraw amount
      
 def transferFromAccount(db: Session, accountID: int, amount: float):
     if amount <= 0:

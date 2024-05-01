@@ -1,5 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel
+from typing import Optional, Union
+
 from datetime import datetime
 
 # TRANSACTION SCHEMAS
@@ -79,5 +81,19 @@ class User(userBase):
 class userUpdate(BaseModel):
     email: Optional[str] = None
     password: Optional[str] = None
-    isActive: Optional[bool] = None
+    isActive: Optional[bool] = None 
 #A class to update the users information such as email and password
+
+
+
+# Receipts 
+class Receipt(BaseModel): 
+    amount: int
+    time: Optional[Union[str, datetime]]
+
+
+# Token 
+class Token(BaseModel):
+    accessToken: str
+    tokenType: str
+

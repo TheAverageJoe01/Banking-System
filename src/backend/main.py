@@ -1,10 +1,12 @@
 from typing import Annotated
-
+from datetime import datetime, timedelta, timezone
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from jose import JWTError, jwt
 
 from passlib.context import CryptContext
+
 passwordContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -12,6 +14,12 @@ from app import crud, models, schemas
 from app.database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
+
+
+
+SECRET_KEY = "test"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 app = FastAPI()
@@ -26,6 +34,48 @@ def getDB():
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+token: Annotated[str, Depends(oauth2_scheme)]
+
+
+def authenticateUser(username: str, password: str, db: Session = Depends(getDB)):
+    user = db.query(models.User).filter(models.User.email == username).first()
+
+    if not user:
+        return False 
+    if not passwordContext.verify(password, user.password):
+        return False
+    return user
+
+
+def createToken(data: dict, expires_delta: timedelta | None = None):
+    toEncode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    toEncode.Update({"exp": expire})
+    encodedJWT = jwt.encode(toEncode, SECRET_KEY, algorithm=ALGORITHM)
+    return encodedJWT
+
+def getCurrentUser(token: Annotated[str, Depends(oauth2_scheme)]):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        id: int = payload.get("id")
+        if username is None or id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate user.",
+            )
+        return {"username": username, "id": id}
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user.")
+
+
+
+
+userDependency = Annotated[dict, Depends(getCurrentUser)]
 
 # User
 # --------------------------------------------------------------------------------------
@@ -46,18 +96,18 @@ def readUsers(skip: int=0, limit: int=100, db: Session = Depends(getDB)):
     return users 
 #Uses the user schema and the readusers function to get up to the first 100 users from the database
 
-@app.get("/users/{userID}", response_model=schemas.User, tags=["Users"])
-def readUser(userID: int, db: Session = Depends(getDB)):
-    dbUser = crud.getUser(db,userID=userID)
+@app.get("/users/", response_model=schemas.User, tags=["Users"])
+def readUser(userID: userDependency, db: Session = Depends(getDB)):
+    dbUser = crud.getUser(db, userID)
     if dbUser is None:
         raise HTTPException(status_code=404, detail = "User not found")
     return dbUser
 #Uses the getUser function from crud to get a user specified by a unique userID, if not found displays an error
 
-@app.put("/users/{userID}", response_model=schemas.User, tags=["Users"])
-def editUser(userID: int, updateUser: schemas.userUpdate, db: Session = Depends(getDB)):
+@app.put("/users/", response_model=schemas.User, tags=["Users"])
+def editUser(userID: userDependency , updateUser: schemas.userUpdate, db: Session = Depends(getDB)):
     # Retrieve the existing user from the database
-    dbUser = crud.getUser(db, userID=userID)
+    dbUser = crud.getUser(db, userID)
     if dbUser is None:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -71,10 +121,10 @@ def editUser(userID: int, updateUser: schemas.userUpdate, db: Session = Depends(
 
     return dbUser
 
-@app.delete("/users/{userID}", tags=["Users"])
-def deleteUser(userID: int, db: Session = Depends(getDB)):
+@app.delete("/users/", tags=["Users"])
+def deleteUser(userID: userDependency, db: Session = Depends(getDB)):
 
-    dbUser = crud.getUser(db, userID=userID)
+    dbUser = crud.getUser(db, userID)
     if dbUser is None:
         raise HTTPException(status_code=404, detail="User not found")
         
@@ -87,17 +137,14 @@ def deleteUser(userID: int, db: Session = Depends(getDB)):
 # --------------------------------------------------------------------------------------
 
 @app.post("/token", tags=["Login"])
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(getDB)):
+async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(getDB)):
     # Attempt to retrieve the user by username/email
-    user = db.query(models.User).filter(models.User.email == form_data.username).first()
+    user = authenticateUser(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect username or password")
+    token = createToken(user.username, user.id, timedelta(minutes=30))
     
-    # Verify the provided password against the stored hash
-    if not passwordContext.verify(form_data.password, user.password):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect username or password")
-    
-    return {"access_token": user.email, "token_type": "bearer"}
+    return {"access_token": token, "token_type": "bearer"}
 #A login function to allow users to login to their account. Creates a form where the user inputs their email and password
 #and then compares the email in the form to the database and see if there are any matches, if there is, then hashes
 #the password inputted by the user in the form, and compares that hashed password to the one in the account when the user
@@ -134,16 +181,16 @@ def readAccountByType(accountType: str, userID, db: Session = Depends(getDB)):
 
 # DEPOSIT/WITHDRAW
 # --------------------------------------------------------------------------------------
-@app.post("/accounts/{userID}/deposit/{accountNumber}", response_model=schemas.Account, tags=["Transactions"])
+@app.post("/accounts/{userID}/deposit/{accountNumber}", response_model=schemas.Receipt, tags=["Transactions"])
 def deposit(userID: int, accountNumber: int, amount: float, db: Session = Depends(getDB)):
     account_deposit = crud.depositToAccount(db, userID = userID, accountNumber = accountNumber, amount=amount)
     if account_deposit is None:
         raise HTTPException(status_code = 404, detail = "User or Account not found")
-    return account_deposit
+    return {"amount": amount, "time": account_deposit.date}
 
-@app.post("/accounts/{userID}/withdraw/{accountNumber}", response_model=schemas.Account, tags=["Transactions"])
+@app.post("/accounts/{userID}/withdraw/{accountNumber}", response_model=schemas.Receipt, tags=["Transactions"])
 def withdraw(userID: int, accountNumber: int, amount: float, db: Session = Depends(getDB)):
     account_withdraw = crud.withdrawFromAccount(db, userID = userID, accountNumber = accountNumber, amount=amount)
     if account_withdraw is None:
         raise HTTPException(status_code = 404, detail = "User or Account not found")
-    return account_withdraw
+    return {"amount": amount, "time": account_withdraw.date}
