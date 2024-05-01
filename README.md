@@ -2,33 +2,33 @@
 
 This system provides a RESTful API for managing users and their accounts built with Python using FastAPI, SQLAlchemy, and OAuth2 for authentication.
 
-# Features
+## Features
 
--User Management: Create, read, update, search and delete users.
+- User Management: Create, read, update, search and delete users.
 
--Authentication: Secure login system using OAuth2 and bcrypt with password hashing for user authentication.
+- Authentication: Secure login system using OAuth2 and bcrypt with password hashing for user authentication.
 
--Account Management: Create, read, and search user accounts by type.
+- Account Management: Create, read, and search user accounts by type.
 
--Deposit/Withdraw: Perform deposits into user accounts and withdrawals from user accounts.
+- Deposit/Withdraw: Perform deposits into user accounts and withdrawals from user accounts.
 
-# Installation
+## Installation
 
-1.Clone the repository:
-git clone https://github.com/TheAverageJoe01/Banking-System.git
+1. Clone the repository
+```bash
+git clone git@github.com:TheAverageJoe01/Banking-System.git
+```
 
-2.Install dependencies:
-pip install -r requirements.txt
+2. Build Docker stack
+```bash
+docker compose up --build
+```
 
-3.Set up the database:
-python app/database.py
+## Usage
 
-4.Run the FastAPI server:
-uvicorn app.main:app --reload
+Once the server is running, you can access the API at the following endpoints:
 
-# Usage
+- React App: (http://localhost:[TBD])
+- SwaggerUI Documentation: (http://localhost:8000/docs)
+- Redoc Documentation: (http://localhost:8000/redoc)
 
-Once the server is running, you can access the API documentation at http://localhost:8000/docs to interact with the endpoints using Swagger UI.
-
-## Countdown 
-// add count down here 
