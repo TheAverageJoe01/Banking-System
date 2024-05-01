@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "backend"
+version = "0.1.0"
+description = ""
+authors = [
+    "Joseph Smith <joseph.c.smith2014@gmail.com>",
+    "Lewis Rees <lewiscrees@gmail.com>",
+    "John Wilson <john256omar@gmail.com>",
+    "Sam Wattle <samwattle99@gmail.com>",
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.31.0"
+fastapi = "^0.110.0"
+uvicorn = "^0.27.1"
+pydantic = "^2.6.3"
+sqlalchemy = "^2.0.28"
+alembic = "^1.13.1"
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.9"
+
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
