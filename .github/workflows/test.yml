@@ -1,17 +1,17 @@
-name: Backend Testing:
+name: Backend Testing
 
 on:
   push:
     branches:
       - dev
     paths:
-      - 'src/backend/**'
+      - "src/backend/**"
 
   pull_request:
     branches:
       - dev
     paths:
-      - 'src/backend/**'
+      - "src/backend/**"
 
 jobs:
   test:
@@ -24,7 +24,7 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install dependencies
         run: |
