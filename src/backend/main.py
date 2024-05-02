@@ -53,7 +53,7 @@ def createToken(data: dict, expires_delta: timedelta | None = None):
         expire = datetime.now(timezone.utc) + expires_delta
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
-    toEncode.Update({"exp": expire})
+    toEncode.update({"exp": expire})
     encodedJWT = jwt.encode(toEncode, SECRET_KEY, algorithm=ALGORITHM)
     return encodedJWT
 
@@ -142,7 +142,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: 
     user = authenticateUser(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect username or password")
-    token = createToken(user.username, user.id, timedelta(minutes=30))
+    token = createToken({"sub": user.email, "id": user.id}, timedelta(minutes=30))
     
     return {"access_token": token, "token_type": "bearer"}
 #A login function to allow users to login to their account. Creates a form where the user inputs their email and password
