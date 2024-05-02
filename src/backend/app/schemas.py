@@ -36,7 +36,6 @@ class accountBase(BaseModel):
     balance: float
     accountType: str
     accountNumber: int
-    userID: int
 #Base details and structure for the account model like balance and account type that uses the basemodel
 
 
@@ -46,7 +45,7 @@ class accountCreate(accountBase):
 #Schema to create the account that extends the account base defined above
 
 class Account(accountBase):
-    pass
+    userID: int
     #transaction = list[Transaction] = []
 
     class Config:

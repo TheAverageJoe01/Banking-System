@@ -153,25 +153,25 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: 
 
 # Account
 # --------------------------------------------------------------------------------------
-@app.post("/accounts/{userID}", response_model=schemas.Account, status_code=201, tags=["Accounts"])
+@app.post("/accounts/", response_model=schemas.Account, status_code=201, tags=["Accounts"])
 #Endpoint to receive input data
-def createAccount(account: schemas.accountCreate, db: Session = Depends(getDB)):
+def createAccount(userID: userDependency, account: schemas.accountCreate, db: Session = Depends(getDB)):
     # dbAccount = crud.getAccountByType(db, userID=account.userID, accountType=account.accountType)
     #if dbAccount:
         #raise HTTPException(status_code=400, detail="Account with this type and user already exists")
-    return crud.createAccount(db=db, account=account)
+    return crud.createAccount(db=db, account=account, userID = userID["id"])
 #Creates account by using the account schema to structure the data, uses the createAccount function to set the
 #variables to a value
 
-@app.get("/accounts/{userID}", response_model=list[schemas.Account], tags=["Accounts"])
-def readAccountsByUserID(userID: int, skip: int=0, limit: int=100, db: Session = Depends(getDB)):
-    accounts = crud.getAccounts(db, userID, skip=skip, limit=limit)
+@app.get("/accounts/", response_model=list[schemas.Account], tags=["Accounts"])
+def readAccountsByUserID(userID: userDependency, skip: int=0, limit: int=100, db: Session = Depends(getDB)):
+    accounts = crud.getAccounts(db=db, userID=userID["id"], skip=skip, limit=limit)
     return accounts
 #Gets a specific account from the database using the UserID specified by the user using the getAccounts function
 
-@app.get("/accounts/{userID}/{accountType}", response_model=list[schemas.Account], tags=["Accounts"])
-def readAccountByType(accountType: str, userID, db: Session = Depends(getDB)):
-    dbAccount = crud.getAccountByType(db, userID, accountType)
+@app.get("/accounts/{accountType}", response_model=list[schemas.Account], tags=["Accounts"])
+def readAccountByType(accountType: str, userID: userDependency, db: Session = Depends(getDB)):
+    dbAccount = crud.getAccountByType(db=db, userID=userID["id"], accountType=accountType)
     if dbAccount is None:
         raise HTTPException(status_code=404, detail = "User not found")
     return dbAccount
@@ -181,16 +181,35 @@ def readAccountByType(accountType: str, userID, db: Session = Depends(getDB)):
 
 # DEPOSIT/WITHDRAW
 # --------------------------------------------------------------------------------------
-@app.post("/accounts/{userID}/deposit/{accountNumber}", response_model=schemas.Receipt, tags=["Transactions"])
-def deposit(userID: int, accountNumber: int, amount: float, db: Session = Depends(getDB)):
-    account_deposit = crud.depositToAccount(db, userID = userID, accountNumber = accountNumber, amount=amount)
+@app.post("/accounts/deposit/{accountNumber}", response_model=schemas.Receipt, tags=["Transactions"])
+def deposit(userID: userDependency, accountNumber: int, amount: float, db: Session = Depends(getDB)):
+    account_deposit = crud.depositToAccount(db, userID = userID["id"], accountNumber = accountNumber, amount=amount)
     if account_deposit is None:
         raise HTTPException(status_code = 404, detail = "User or Account not found")
     return {"amount": amount, "time": account_deposit.date}
 
-@app.post("/accounts/{userID}/withdraw/{accountNumber}", response_model=schemas.Receipt, tags=["Transactions"])
-def withdraw(userID: int, accountNumber: int, amount: float, db: Session = Depends(getDB)):
-    account_withdraw = crud.withdrawFromAccount(db, userID = userID, accountNumber = accountNumber, amount=amount)
+@app.post("/accounts/withdraw/{accountNumber}", response_model=schemas.Receipt, tags=["Transactions"])
+def withdraw(userID: userDependency, accountNumber: int, amount: float, db: Session = Depends(getDB)):
+    account_withdraw = crud.withdrawFromAccount(db, userID = userID["id"], accountNumber = accountNumber, amount=amount)
     if account_withdraw is None:
         raise HTTPException(status_code = 404, detail = "User or Account not found")
     return {"amount": amount, "time": account_withdraw.date}
+
+@app.post("/accounts/transfer/{account1}/{account2}", response_model=schemas.Receipt, tags=["Transactions"])
+def transfer(userID: userDependency, account1: int, account2: int, amount: float, db:Session = Depends(getDB)):
+    try:
+        account_withdraw = crud.withdrawFromAccount(db, userID=userID["id"], accountNumber=account1, amount=amount)
+        if account_withdraw is None:
+            raise HTTPException(status_code=404, detail="User or Account not found")
+
+        account_deposit = crud.depositToAccount(db, userID=userID["id"], accountNumber=account2, amount=amount)
+        if account_deposit is None:
+            # If deposit fails, roll back the withdrawal
+            crud.depositToAccount(db, userID=userID["id"], accountNumber=account1, amount=amount)  # Rollback
+            raise HTTPException(status_code=404, detail="User or Account not found")
+
+        return {"amount": amount, "message": "Transfer successful from {account1}", "time": account_withdraw.date}
+    except Exception as e:
+        # Handle other exceptions such as database errors
+        return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    

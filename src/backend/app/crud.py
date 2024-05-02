@@ -43,7 +43,7 @@ def getAccounts(db: Session, userID: int, skip: int = 0, limit: int = 100):
 def getAccountByType(db: Session, userID: int, accountType: str):
     return db.query(models.Account).filter(models.Account.userID == userID).filter(models.Account.accountType == accountType).all()
 #Function to return an account specified via a userID and account type
-def createAccount(db: Session, account: schemas.accountCreate):
+def createAccount(db: Session, account: schemas.accountCreate, userID: int):
     # create a query to find account id 
     
     #last_account = db.query(models.Account).order_by(models.Account.id.desc()).first()
@@ -52,10 +52,10 @@ def createAccount(db: Session, account: schemas.accountCreate):
     #else:
         #accountNumber = 1
 
-    accountNumber = db.query(models.Account).filter(models.Account.userID==account.userID).count() + 1
+    accountNumber = db.query(models.Account).filter(models.Account.userID==userID).count() + 1
     
 
-    dbAccount = models.Account(balance = account.balance, accountType = account.accountType, userID = account.userID, accountNumber = accountNumber)
+    dbAccount = models.Account(balance = account.balance, accountType = account.accountType, userID = userID, accountNumber = accountNumber)
     db.add(dbAccount)
     db.commit()
     db.refresh(dbAccount)
