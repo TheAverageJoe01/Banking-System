@@ -7,6 +7,10 @@ from jose import JWTError, jwt
 
 from passlib.context import CryptContext
 
+from fastapi.middleware.cors import CORSMiddleware
+
+
+
 passwordContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -15,14 +19,22 @@ from app.database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
-
-
 SECRET_KEY = "test"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-
 app = FastAPI()
+
+# Frontend communication - Cross-origin resource sharing (CORS)
+origins = ["http://localhost:3000"]  # Replace with your frontend origin(s)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Dependencies
 def getDB():
@@ -56,7 +68,17 @@ def createToken(data: dict, expires_delta: timedelta | None = None):
     toEncode.update({"exp": expire})
     encodedJWT = jwt.encode(toEncode, SECRET_KEY, algorithm=ALGORITHM)
     return encodedJWT
-
+    
+def verify_token(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=403, detail="Token is invalid or expired")
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=403, detail="Token is invalid or expired")
+    
 def getCurrentUser(token: Annotated[str, Depends(oauth2_scheme)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -71,7 +93,6 @@ def getCurrentUser(token: Annotated[str, Depends(oauth2_scheme)]):
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user.")
-
 
 
 
@@ -145,6 +166,11 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: 
     token = createToken({"sub": user.email, "id": user.id}, timedelta(minutes=30))
     
     return {"access_token": token, "token_type": "bearer"}
+
+@app.get("/verify-token/{token}")
+async def verify_user_token(token: str):
+    verify_token(token=token)
+    return {"message": "Token is valid"}
 #A login function to allow users to login to their account. Creates a form where the user inputs their email and password
 #and then compares the email in the form to the database and see if there are any matches, if there is, then hashes
 #the password inputted by the user in the form, and compares that hashed password to the one in the account when the user
