@@ -58,7 +58,6 @@ def authenticateUser(username: str, password: str, db: Session = Depends(getDB))
         return False
     return user
 
-
 def createToken(data: dict, expires_delta: timedelta | None = None):
     toEncode = data.copy()
     if expires_delta:
@@ -72,10 +71,10 @@ def createToken(data: dict, expires_delta: timedelta | None = None):
 def verify_token(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
+        username, id = payload.get("sub"), payload.get("id")
         if username is None:
             raise HTTPException(status_code=403, detail="Token is invalid or expired")
-        return payload
+        return username, id
     except JWTError:
         raise HTTPException(status_code=403, detail="Token is invalid or expired")
     
@@ -169,8 +168,8 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: 
 
 @app.get("/verify-token/{token}")
 async def verify_user_token(token: str):
-    verify_token(token=token)
-    return {"message": "Token is valid"}
+    username, id = verify_token(token=token)
+    return {"message": "Token is valid", "username": username, "id": id}
 #A login function to allow users to login to their account. Creates a form where the user inputs their email and password
 #and then compares the email in the form to the database and see if there are any matches, if there is, then hashes
 #the password inputted by the user in the form, and compares that hashed password to the one in the account when the user
