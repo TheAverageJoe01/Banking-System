@@ -107,8 +107,8 @@ def readUser(user: userDependency, db: Session = Depends(getDB)):
 # Uses the getUser function from crud to get a user specified by a unique userID, if not found displays an error
 
 
-@app.put("/users/", response_model=schemas.User, tags=["Users"])
-def editUser(
+@app.put("/users/", response_model=schemas.userEdited, tags=["Users"])
+def editEmail(
     user: userDependency, updateUser: schemas.userUpdate, db: Session = Depends(getDB)
 ):
     # Retrieve the existing user from the database
@@ -116,18 +116,22 @@ def editUser(
     if dbUser is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Update the user information
-    # if the user wants to change the email
-    if updateUser.email:
-        dbUser.email = updateUser.email
-    # if the user wants to change the password
-    if updateUser.password:
-        dbUser.password = passwordContext.hash(updateUser.password)
+    newEmail = updateUser.email
+    if db.query(models.User).filter(models.User.email == newEmail).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    dbUser.email = updateUser.email
 
     db.commit()
     db.refresh(dbUser)
-
-    return dbUser
+    accessToken = createToken(
+        {"sub": updateUser.email, "id": user["id"]}, timedelta(minutes=30)
+    )
+    refreshToken = createToken(
+        {"sub": updateUser.email, "id": user["id"], "refresh": True},
+        timedelta(days=7),
+    )
+    return {"user": updateUser, "accessToken": accessToken, "refreshToken": refreshToken}
 
 
 @app.delete("/users/", tags=["Users"])

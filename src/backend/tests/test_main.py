@@ -96,6 +96,13 @@ def test_bad_read_user():
     assert response.status_code == 401
 
 
+def test_edit_user_email():
+    userData = {
+        "email": "editUser@email,com",
+        "password": "testPassword",
+    }
+
+
 def test_delete_user():
     response = client.delete(
         "/users/", headers={"Authorization": f"Bearer {login_token}"}

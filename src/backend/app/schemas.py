@@ -101,7 +101,13 @@ class User(userBase):
 class userUpdate(BaseModel):
     email: Optional[str] = None
     password: Optional[str] = None
-    isActive: Optional[bool] = None
+    # isActive: Optional[bool] = None
+
+
+class userEdited(BaseModel):
+    user: userUpdate
+    accessToken: str
+    refreshToken: str
 
 
 # A class to update the users information such as email and password
