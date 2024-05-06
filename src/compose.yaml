@@ -8,3 +8,12 @@ services:
       watch:
         - action: rebuild
           path: ./backend/
+  client:
+    build:
+      context: ./frontend/
+    ports:
+      - 3000:80
+    develop:
+      watch:
+        - action: rebuild
+          path: ./frontend/
