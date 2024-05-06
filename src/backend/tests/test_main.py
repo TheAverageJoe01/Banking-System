@@ -97,11 +97,28 @@ def test_bad_read_user():
 
 
 def test_edit_user_email():
+    global login_token
     userData = {
-        "email": "editUser@email,com",
-        "password": "testPassword",
+        "email": "editUser@email.com",
+        "password": testUserData["password"],
     }
 
+    response = client.put("/users/", json=userData, headers={"Authorization": f"Bearer {login_token}"})
+
+    login_token = response.json()["accessToken"]
+
+    assert response.status_code == 200
+
+    assert response.json()["user"]["email"] == "editUser@email.com"
+
+    resetData = {
+        "email": testUserData["email"],
+        "password": testUserData["password"],
+    }
+
+    resetResponse = client.put("/users/", json=resetData, headers={"Authorization": f"Bearer {login_token}"})
+
+    login_token = resetResponse.json()["accessToken"]
 
 def test_delete_user():
     response = client.delete(
