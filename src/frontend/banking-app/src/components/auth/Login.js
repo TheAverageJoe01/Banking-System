@@ -127,7 +127,7 @@ function Login() {
               {loading ? 'Logging in...' : 'Login'}
             </Button>
 
-            <Button variant="info" onClick={handleShow} disabled={loading}>
+            <Button variant="success" onClick={handleShow} disabled={loading}>
               Create User
             </Button>
           </Container>
