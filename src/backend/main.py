@@ -96,7 +96,7 @@ def createUser(user: schemas.userCreate, db: Session = Depends(getDB)):
 # Uses the user schema and the readusers function to get up to the first 100 users from the database
 
 
-@app.get("/users/", response_model=schemas.User, tags=["Users"])
+@app.get("/users/", response_model=schemas.User, tags=["Users"], status_code=200)
 def readUser(user: userDependency, db: Session = Depends(getDB)):
     dbUser = crud.getUser(db, user["id"])
     if dbUser is None:
@@ -107,7 +107,7 @@ def readUser(user: userDependency, db: Session = Depends(getDB)):
 # Uses the getUser function from crud to get a user specified by a unique userID, if not found displays an error
 
 
-@app.put("/users/", response_model=schemas.userEdited, tags=["Users"])
+@app.put("/users/", response_model=schemas.userEdited, tags=["Users"], status_code=200)
 def editEmail(
     user: userDependency, updateUser: schemas.userUpdate, db: Session = Depends(getDB)
 ):
@@ -134,8 +134,8 @@ def editEmail(
     return {"user": updateUser, "accessToken": accessToken, "refreshToken": refreshToken}
 
 
-@app.delete("/users/", tags=["Users"])
-def deleteUser(user: userDependency, db: Session = Depends(getDB)):
+@app.delete("/users/", status_code=200, tags=["Users"])
+def deleteUser(user: userDependency, response_model=schemas.userDelete, db: Session = Depends(getDB)):
 
     dbUser = crud.getUser(db, user["id"])
     if dbUser is None:
@@ -143,7 +143,7 @@ def deleteUser(user: userDependency, db: Session = Depends(getDB)):
 
     db.delete(dbUser)
     db.commit()
-    return {"ok": True}
+    return {"message": "User successfully deleted"}
 
 
 # Gets the user specified, and then deletes the user from the database, if no user found, displays error
@@ -154,7 +154,7 @@ def deleteUser(user: userDependency, db: Session = Depends(getDB)):
 
 @app.post("/token/", tags=["Login"])
 async def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], status_code=200,
     db: Session = Depends(getDB),
 ):
     # Attempt to retrieve the user by username/email
@@ -194,7 +194,7 @@ def createAccount(
 # variables to a value
 
 
-@app.get("/accounts/", response_model=list[schemas.Account], tags=["Accounts"])
+@app.get("/accounts/", response_model=list[schemas.Account], status_code=200, tags=["Accounts"])
 def readAccountsByUserID(
     userID: userDependency,
     skip: int = 0,
@@ -209,7 +209,7 @@ def readAccountsByUserID(
 
 
 @app.get(
-    "/accounts/{accountType}", response_model=list[schemas.Account], tags=["Accounts"]
+    "/accounts/{accountType}", response_model=list[schemas.Account], status_code=200, tags=["Accounts"]
 )
 def readAccountByType(
     accountType: str, userID: userDependency, db: Session = Depends(getDB)
@@ -231,6 +231,7 @@ def readAccountByType(
 @app.post(
     "/accounts/deposit/{accountNumber}",
     response_model=schemas.Receipt,
+    status_code=200,
     tags=["Transactions"],
 )
 def deposit(
@@ -250,6 +251,7 @@ def deposit(
 @app.post(
     "/accounts/withdraw/{accountNumber}",
     response_model=schemas.Receipt,
+    status_code=200,
     tags=["Transactions"],
 )
 def withdraw(
@@ -269,6 +271,7 @@ def withdraw(
 @app.post(
     "/accounts/transfer/{account1}/{account2}",
     response_model=schemas.Receipt,
+    status_code=200,
     tags=["Transactions"],
 )
 def transfer(

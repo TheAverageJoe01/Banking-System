@@ -109,6 +109,9 @@ class userEdited(BaseModel):
     accessToken: str
     refreshToken: str
 
+class userDelete(BaseModel):
+    message: str
+
 
 # A class to update the users information such as email and password
 
