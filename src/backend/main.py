@@ -192,7 +192,7 @@ def createAccount(userID: userDependency, account: schemas.accountCreate, db: Se
 def readAccountsByUserID(userID: userDependency, skip: int=0, limit: int=100, db: Session = Depends(getDB)):
     accounts = crud.getAccounts(db=db, userID=userID["id"], skip=skip, limit=limit)
     return accounts
-#Gets a specific account from the database using the UserID specified by the user using the getAccounts function
+#Gets all accounts from the database using the UserID specified by the user using the getAccounts function
 
 @app.get("/accounts/{accountType}", response_model=list[schemas.Account], tags=["Accounts"])
 def readAccountByType(accountType: str, userID: userDependency, db: Session = Depends(getDB)):
