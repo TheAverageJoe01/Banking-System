@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Dropdown, Container, Button, ButtonGroup } from 'react-bootstrap';
+import { Dropdown, Container, Button, ButtonGroup, Popover, Overlay } from 'react-bootstrap';
 import { FaUser } from 'react-icons/fa';
 import { Modal, Form } from 'react-bootstrap';
 
@@ -15,7 +15,7 @@ function Home() {
     const [isLoading, setIsLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [newAccountType, setNewAccountType] = useState('');
-
+    const [showUserOverlay, setShowUserOverlay] = useState(false);
     const handleCloseModal = () => setShowModal(false);
     const handleShowModal = () => setShowModal(true);
 
@@ -48,7 +48,7 @@ function Home() {
             navigate(`/account/${newAccountType}`);
             // Account created successfully, close the modal and potentially update UI
             handleCloseModal();
-            
+
             // Optionally, you can update the UI to reflect the new account
         } catch (error) {
             console.error('Error creating account:', error);
@@ -124,13 +124,39 @@ function Home() {
         return <p>Loading...</p>;
     }
 
+    const toggleUserOverlay = () => setShowUserOverlay(!showUserOverlay);
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/')
+    };
+
+  
+
     return (
         <Container>
             <Container className="d-flex align-items-center p-3">
-                <FaUser size={36} className="mr-2" style={{ marginRight: '10px' }} />
+                <FaUser size={36} className="mr-2" style={{ marginRight: '10px', cursor: 'pointer' }} onClick={toggleUserOverlay} id="user-icon" />
                 <h2>{username}</h2>
             </Container>
             <Container className="d-flex justify-content-center align-items-center vh-100">
+                <Overlay
+                    show={showUserOverlay}
+                    target={document.getElementById("user-icon")}
+                    placement="bottom"
+                >
+                    <Popover id="popover-contained">
+                        <Popover.Header as="h3">User Information</Popover.Header>
+                        <Popover.Body>
+                            <Button variant="secondary" onClick={null} style={{ marginRight: '10px' }}>
+                                Edit User
+                            </Button>
+                            <Button variant="danger" onClick={handleLogout}>
+                                Logout
+                            </Button>
+                        </Popover.Body>
+                    </Popover>
+                </Overlay>
 
                 <div className="d-flex flex-column align-items-center">
                     <h2>Home</h2>
