@@ -79,6 +79,13 @@ function Account() {
         verifyTokenAndFetchAccount();
     }, [navigate, accountType]);
 
+
+    // Function to handle navigation to pages
+    const handleTransactionsClick = (event) => {
+        event.preventDefault();
+        navigate(`/account/transactions/${accountDetails.accountNumber}`);
+    };
+
     const handleDepositClick = (event) => {
         event.preventDefault();
         navigate(`/account/deposit/${accountType}`);
@@ -119,7 +126,7 @@ function Account() {
                 <h1>{accountDetails.accountType} Account</h1>
                 <h3>#{accountDetails.accountNumber}</h3>
                 <p>Balance: £{accountDetails.balance}</p>
-                <Button variant="secondary" size="lg" onClick={null} className="my-2" style={{ width: '200px' }}>Balance</Button>
+                <Button variant="secondary" size="lg" onClick={handleTransactionsClick} className="my-2" style={{ width: '200px' }}>Transactions</Button>
                 <Button variant="secondary" size="lg" onClick={handleWithdrawClick} className="my-2" style={{ width: '200px' }}>Withdraw</Button>
                 <Button variant="secondary" size="lg" onClick={handleDepositClick} className="my-2" style={{ width: '200px' }}>Deposit</Button>
                 <Button variant="secondary" size="lg" onClick={handleTransferClick} className="my-2" style={{ width: '200px' }}>Transfer</Button>
