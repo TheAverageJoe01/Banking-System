@@ -6,3 +6,6 @@
 
 # Ignore environment variables
 *.env
+
+# Ignore vscode
+*.vscode

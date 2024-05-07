@@ -1,4 +1,5 @@
 # dependencies
+/banking-app
 /node_modules
 /.pnp
 .pnp.js
