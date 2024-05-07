@@ -1,0 +1,39 @@
+name: Backend Testing
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - "src/backend/**"
+
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - "src/backend/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install poetry
+          python -m poetry config virtualenvs.in-project true
+          cd src/backend
+          poetry install --no-root
+
+      - name: Run tests
+        run: |
+          cd src/backend
+          poetry run pytest

@@ -1,8 +1,8 @@
-from typing import Optional
-from pydantic import BaseModel
+from datetime import datetime
 from typing import Optional, Union
 
-from datetime import datetime
+from pydantic import BaseModel
+
 
 # TRANSACTION SCHEMAS
 # -----------------------------------------------------------------------------
@@ -10,11 +10,17 @@ class transactionBase(BaseModel):
     amount: int
     date: str
     transactionType: str
-#Base transaction class that defines the structure and data of any transaction type
+
+
+# Base transaction class that defines the structure and data of any transaction type
+
 
 class createTransaction(transactionBase):
     balance: float
-#A class that extends the transaction base by adding a balance which will be used in deposits and withdraws
+
+
+# A class that extends the transaction base by adding a balance which will be used in deposits and withdraws
+
 
 class Transaction(transactionBase):
     transactionID: int
@@ -22,8 +28,11 @@ class Transaction(transactionBase):
 
     class Config:
         from_attributes = True
-#Transaction which extends the transactionbase with an accountID and transactionID
-        
+
+
+# Transaction which extends the transactionbase with an accountID and transactionID
+
+
 class updateTransaction(BaseModel):
     amount: Optional[int] = None
     balance: Optional[float] = None
@@ -32,29 +41,34 @@ class updateTransaction(BaseModel):
 # ACCOUNT SCHEMAS
 # -----------------------------------------------------------------------------
 class accountBase(BaseModel):
-    #date: str
+    # date: str
     balance: float
     accountType: str
-    accountNumber: int
-#Base details and structure for the account model like balance and account type that uses the basemodel
+
+
+# Base details and structure for the account model like balance and account type that uses the basemodel
 
 
 class accountCreate(accountBase):
-    #accountNumber: int
+    # accountNumber: int
     pass
-#Schema to create the account that extends the account base defined above
+
+
+# Schema to create the account that extends the account base defined above
+
 
 class Account(accountBase):
     userID: int
-    #transaction = list[Transaction] = []
+    accountNumber: int
+    # transaction = list[Transaction] = []
 
     class Config:
         from_attributes = True
 
+
 class accountUpdate(BaseModel):
     name: Optional[str] = None
     balance: Optional[float] = None
-
 
 
 # USER SCHEMAS
@@ -62,37 +76,53 @@ class accountUpdate(BaseModel):
 class userBase(BaseModel):
     name: str
     email: str
-#Contains the base structure and variables of the user model
+
+
+# Contains the base structure and variables of the user model
+
 
 class userCreate(userBase):
     password: str
-#A class that extends the userbase class by adding a password that is defined by the user when creating an account
+
+
+# A class that extends the userbase class by adding a password that is defined by the user when creating an account
+
 
 class User(userBase):
     id: int
     isActive: bool
-    #accounts = list[Account] = []
-#Extends the userbase class by adding a ID for the user as well as if the user is active (deleted/not deleted)
+    # accounts = list[Account] = []
+    # Extends the userbase class by adding a ID for the user as well as if the user is active (deleted/not deleted)
 
     class Config:
         from_attributes = True
 
+
 class userUpdate(BaseModel):
     email: Optional[str] = None
     password: Optional[str] = None
-    isActive: Optional[bool] = None 
-#A class to update the users information such as email and password
+    # isActive: Optional[bool] = None
 
 
+class userEdited(BaseModel):
+    user: userUpdate
+    accessToken: str
+    refreshToken: str
 
-# Receipts 
-class Receipt(BaseModel): 
+class userDelete(BaseModel):
+    message: str
+
+
+# A class to update the users information such as email and password
+
+
+# Receipts
+class Receipt(BaseModel):
     amount: int
     time: Optional[Union[str, datetime]]
 
 
-# Token 
+# Token
 class Token(BaseModel):
     accessToken: str
     tokenType: str
-
