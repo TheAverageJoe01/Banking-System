@@ -27,7 +27,7 @@ class Account(Base):
     __tablename__ = "accounts"
 
     id = Column(Integer, primary_key=True, index=True)
-    accountNumber = Column(Integer, index=True)
+    accountNumber = Column(Integer, unique=True, index=True)
     balance = Column(Float, index=True)
     accountType = Column(String, index=True)
     userID = Column(Integer, ForeignKey('users.id'))

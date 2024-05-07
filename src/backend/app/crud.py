@@ -44,18 +44,21 @@ def getAccountByType(db: Session, userID: int, accountType: str):
     return db.query(models.Account).filter(models.Account.userID == userID).filter(models.Account.accountType == accountType).all()
 #Function to return an account specified via a userID and account type
 def createAccount(db: Session, account: schemas.accountCreate, userID: int):
-    # create a query to find account id 
-    
-    #last_account = db.query(models.Account).order_by(models.Account.id.desc()).first()
-    #if last_account:
-        #accountNumber = last_account.accountNumber + 1
-    #else:
-        #accountNumber = 1
+    # Query the database to find the maximum accountNumber for the given user
+    max_account_number = db.query(models.Account.accountNumber).filter(models.Account.userID == userID).order_by(models.Account.accountNumber.desc()).first()
 
-    accountNumber = db.query(models.Account).filter(models.Account.userID==userID).count() + 1
-    
+    # Increment the maximum accountNumber by 1 or set to 1 if no accounts exist for the user
+    next_account_number = (max_account_number[0] + 1) if max_account_number else 1
 
-    dbAccount = models.Account(balance = account.balance, accountType = account.accountType, userID = userID, accountNumber = accountNumber)
+    # Create the new account
+    dbAccount = models.Account(
+        balance=account.balance,
+        accountType=account.accountType,
+        userID=userID,
+        accountNumber=next_account_number
+    )
+
+    # Add the new account to the session and commit the transaction
     db.add(dbAccount)
     db.commit()
     db.refresh(dbAccount)
@@ -64,6 +67,15 @@ def createAccount(db: Session, account: schemas.accountCreate, userID: int):
 #Prevents duplicate numbers by increasing the account after every account is created
 #Adds the account to the database and refreshes it
 
+def delete_account(db: Session, userID: int, account_number: int):
+
+    account = db.query(models.Account).filter(models.Account.accountNumber == account_number, models.Account.userID == userID).first()
+    if account:
+        db.delete(account)
+        db.commit()
+    else:
+        raise HTTPException(status_code=404, detail="Account not found")
+# Function deletes account based on current user, given the account number
 
 # Transfer crud
 # --------------------------------------------------------------------------------

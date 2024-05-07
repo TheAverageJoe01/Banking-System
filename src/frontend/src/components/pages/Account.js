@@ -8,6 +8,34 @@ function Account() {
     const [accountDetails, setAccountDetails] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    const handleDelete = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:8000/accounts/${accountDetails.accountNumber}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.detail || 'Failed to delete account');
+            }
+
+            // Account deleted successfully, you may want to update UI or perform other actions
+            console.log('Account deleted successfully:', data);
+            alert('Account deleted successfully');
+            navigate('/home')
+        } catch (error) {
+            console.error('Error deleting account:', error);
+            alert(error);
+            // Handle error, display error message to the user, etc.
+        }
+    };
+
+
     useEffect(() => {
         const verifyTokenAndFetchAccount = async () => {
             const token = localStorage.getItem('token');
@@ -95,7 +123,7 @@ function Account() {
                 <Button variant="secondary" size="lg" onClick={handleWithdrawClick} className="my-2" style={{ width: '200px' }}>Withdraw</Button>
                 <Button variant="secondary" size="lg" onClick={handleDepositClick} className="my-2" style={{ width: '200px' }}>Deposit</Button>
                 <Button variant="secondary" size="lg" onClick={handleTransferClick} className="my-2" style={{ width: '200px' }}>Transfer</Button>
-                <Button variant="danger" size="sm" onClick={null} className="my-2">Delete</Button>
+                <Button variant="danger" size="sm" onClick={handleDelete} className="my-2">Delete</Button>
             </Container>
         </Container>
     );

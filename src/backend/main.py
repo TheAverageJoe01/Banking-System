@@ -203,6 +203,12 @@ def readAccountByType(accountType: str, userID: userDependency, db: Session = De
 #Gets a specific account type from the database by a specified userID and accountType, if no account is found
 #displays an error message
 
+@app.delete("/accounts/{account_number}", tags=["Accounts"])
+def delete_account(account_number: int, userID: userDependency, db: Session = Depends(getDB)):
+
+    crud.delete_account(db=db, userID=userID['id'], account_number=account_number)
+    return {"message": "Account deleted successfully"}
+
 
 # DEPOSIT/WITHDRAW
 # --------------------------------------------------------------------------------------

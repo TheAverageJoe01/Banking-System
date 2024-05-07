@@ -22,6 +22,13 @@ function Home() {
     const handleCreateAccount = async () => {
         try {
             const token = localStorage.getItem('token');
+            // Check if an account of the same type already exists
+            const existingAccount = items.find(item => item.accountType === newAccountType);
+            if (existingAccount) {
+                alert('Account of the same type already exists')
+                throw new Error('Account of the same type already exists');
+            }
+
             const response = await fetch('http://localhost:8000/accounts/', {
                 method: 'POST',
                 headers: {
@@ -38,9 +45,10 @@ function Home() {
             if (!response.ok) {
                 throw new Error('Failed to create account');
             }
-
+            navigate(`/account/${newAccountType}`);
             // Account created successfully, close the modal and potentially update UI
             handleCloseModal();
+            
             // Optionally, you can update the UI to reflect the new account
         } catch (error) {
             console.error('Error creating account:', error);
@@ -65,7 +73,7 @@ function Home() {
                 const { username, id } = await response.json();
                 setUser(username);
                 setId(id);
-                fetchAccounts(id); 
+                fetchAccounts(id);
             } catch (error) {
                 console.error(error);
                 localStorage.removeItem('token');
@@ -148,10 +156,10 @@ function Home() {
                             </Form>
                         </Modal.Body>
                         <Modal.Footer>
-                            <Button variant="secondary" onClick={handleCloseModal}style={{ width: '100px' }}>
+                            <Button variant="secondary" onClick={handleCloseModal} style={{ width: '100px' }}>
                                 Close
                             </Button>
-                            <Button variant="success" onClick={handleCreateAccount}style={{ width: '200px' }}>
+                            <Button variant="success" onClick={handleCreateAccount} style={{ width: '200px' }}>
                                 Create Account
                             </Button>
                         </Modal.Footer>
