@@ -6,6 +6,7 @@ import Account from './components/pages/Account';
 import Deposit from './components/pages/Deposit';
 import Withdraw from './components/pages/Withdraw';
 import Transfer from './components/pages/Transfer';
+import Transactions from './components/pages/Transactions';
 
 function App() {
   
@@ -15,6 +16,7 @@ function App() {
       <Route path="/" element={<Login />} />
       <Route path="/home" element={<Home />} />
       <Route path="/account/:accountType" element={<Account />} />
+      <Route path="/account/transactions/:accountNumber" element={<Transactions />} />
       <Route path="/account/deposit/:accountType" element={<Deposit />} />
       <Route path="/account/withdraw/:accountType" element={<Withdraw />} />
       <Route path="/account/transfer/:accountType" element={<Transfer />} />
