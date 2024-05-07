@@ -73,7 +73,7 @@ function Home() {
             }
         };
 
-        const fetchAccounts = async (userId) => {
+        const fetchAccounts = async () => {
             setIsLoading(true);
             try {
                 const token = localStorage.getItem('token');
@@ -117,14 +117,15 @@ function Home() {
     }
 
     return (
-        <>
-            <div className="d-flex align-items-center p-3">
+        <Container>
+            <Container className="d-flex align-items-center p-3">
                 <FaUser size={36} className="mr-2" style={{ marginRight: '10px' }} />
                 <h2>{username}</h2>
-            </div>
+            </Container>
             <Container className="d-flex justify-content-center align-items-center vh-100">
 
                 <div className="d-flex flex-column align-items-center">
+                    <h2>Home</h2>
                     <Button variant="success" onClick={handleShowModal} style={{ width: '200px' }} className="mb-3">
                         Create New Account
                     </Button>
@@ -176,7 +177,7 @@ function Home() {
                     </div>
                 </div>
             </Container>
-        </>
+        </Container>
     )
 }
 
