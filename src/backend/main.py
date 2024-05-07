@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from fastapi.middleware.cors import CORSMiddleware
 
-
+from typing import Optional, List
 
 passwordContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -26,7 +26,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 app = FastAPI()
 
 # Frontend communication - Cross-origin resource sharing (CORS)
-origins = ["http://localhost:3000"]  # Replace with your frontend origin(s)
+origins = ["http://localhost:3000"]  
 
 app.add_middleware(
     CORSMiddleware,
@@ -279,7 +279,8 @@ def deposit(
     )
     if account_deposit is None:
         raise HTTPException(status_code=404, detail="User or Account not found")
-    return {"amount": amount, "time": account_deposit.date}
+    
+    return {"amount": amount, "time": account_deposit.date, "type": "Deposit"}
 
 
 @app.post(
@@ -299,7 +300,8 @@ def withdraw(
     )
     if account_withdraw is None:
         raise HTTPException(status_code=404, detail="User or Account not found")
-    return {"amount": amount, "time": account_withdraw.date}
+    
+    return {"amount": amount, "time": account_withdraw.date, "type": "Withdraw"}
 
 
 @app.post(
@@ -317,27 +319,68 @@ def transfer(
 ):
     try:
         account_withdraw = crud.withdrawFromAccount(
-            db, userID=user["id"], accountNumber=account1, amount=amount
+            db, userID=user["id"], accountNumber=account1, amount=amount, isTransfer=True
         )
         if account_withdraw is None:
             raise HTTPException(status_code=404, detail="User or Account not found")
 
         account_deposit = crud.depositToAccount(
-            db, userID=user["id"], accountNumber=account2, amount=amount
+            db, userID=user["id"], accountNumber=account2, amount=amount, isTransfer=True
         )
         if account_deposit is None:
             # If deposit fails, roll back the withdrawal
             crud.depositToAccount(
-                db, userID=user["id"], accountNumber=account1, amount=amount
+                db, userID=user["id"], accountNumber=account1, amount=amount, isTransfer=True
             )  # Rollback
             raise HTTPException(status_code=404, detail="User or Account not found")
 
         return {
             "amount": amount,
             "time": account_withdraw.date,
+            "type": "Transfer"
         }
     except Exception as e:
         # Handle other exceptions such as database errors
         return HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
+
+# Transactions
+
+# Function to convert Transaction objects to Receipt objects
+def transaction_to_receipt(transaction: models.Transaction) -> schemas.Receipt:
+    return schemas.Receipt(
+        amount=transaction.amount,
+        time=transaction.date,
+        type=transaction.transactionType
+    )
+
+@app.get("/transactions/{account_number}", response_model=List[schemas.Receipt], tags=["Transactions"])
+def get_transactions(
+    account_number: int,
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    transaction_type: Optional[str] = Query(None),
+    min_amount: Optional[float] = Query(None),
+    max_amount: Optional[float] = Query(None),
+    db: Session = Depends(getDB)
+):
+    # Construct base query to filter transactions by account number
+    query = db.query(models.Transaction).join(models.Account).filter(models.Account.accountNumber == account_number)
+
+    # Apply additional filters if provided
+    if start_date:
+        query = query.filter(models.Transaction.date >= start_date)
+    if end_date:
+        query = query.filter(models.Transaction.date <= end_date)
+    if transaction_type:
+        query = query.filter(models.Transaction.transactionType == transaction_type)
+    if min_amount:
+        query = query.filter(models.Transaction.amount >= min_amount)
+    if max_amount:
+        query = query.filter(models.Transaction.amount <= max_amount)
+
+    # Execute the query, convert transactions to receipts, and return the results
+    transactions = query.all()
+    receipts = [transaction_to_receipt(transaction) for transaction in transactions]
+    return receipts

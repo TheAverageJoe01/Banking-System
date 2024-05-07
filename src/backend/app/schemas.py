@@ -120,6 +120,7 @@ class userDelete(BaseModel):
 class Receipt(BaseModel):
     amount: int
     time: Optional[Union[str, datetime]]
+    type: str # withdraw, deposit or transfer
 
 
 # Token
