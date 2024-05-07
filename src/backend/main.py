@@ -7,6 +7,10 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
+from fastapi.middleware.cors import CORSMiddleware
+
+
+
 passwordContext = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -15,14 +19,22 @@ from app.database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
-
 SECRET_KEY = "test"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-
 app = FastAPI()
 
+# Frontend communication - Cross-origin resource sharing (CORS)
+origins = ["http://localhost:3000"]  # Replace with your frontend origin(s)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Dependencies
 def getDB():
@@ -46,7 +58,6 @@ def authenticateUser(username: str, password: str, db: Session = Depends(getDB))
         return False
     return user
 
-
 def createToken(data: dict, expires_delta: timedelta | None = None):
     toEncode = data.copy()
     if expires_delta:
@@ -56,8 +67,17 @@ def createToken(data: dict, expires_delta: timedelta | None = None):
     toEncode.update({"exp": expire})
     encodedJWT = jwt.encode(toEncode, SECRET_KEY, algorithm=ALGORITHM)
     return encodedJWT
-
-
+    
+def verify_token(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username, id = payload.get("sub"), payload.get("id")
+        if username is None:
+            raise HTTPException(status_code=403, detail="Token is invalid or expired")
+        return username, id
+    except JWTError:
+        raise HTTPException(status_code=403, detail="Token is invalid or expired")
+    
 def getCurrentUser(token: Annotated[str, Depends(oauth2_scheme)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -73,7 +93,6 @@ def getCurrentUser(token: Annotated[str, Depends(oauth2_scheme)]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user."
         )
-
 
 userDependency = Annotated[dict, Depends(getCurrentUser)]
 
@@ -168,11 +187,14 @@ async def login(
 
     return {"access_token": token, "token_type": "bearer"}
 
-
-# A login function to allow users to login to their account. Creates a form where the user inputs their email and password
-# and then compares the email in the form to the database and see if there are any matches, if there is, then hashes
-# the password inputted by the user in the form, and compares that hashed password to the one in the account when the user
-# created the account
+@app.get("/verify-token/{token}")
+async def verify_user_token(token: str):
+    username, id = verify_token(token=token)
+    return {"message": "Token is valid", "username": username, "id": id}
+#A login function to allow users to login to their account. Creates a form where the user inputs their email and password
+#and then compares the email in the form to the database and see if there are any matches, if there is, then hashes
+#the password inputted by the user in the form, and compares that hashed password to the one in the account when the user
+#created the account
 
 
 # Account
@@ -203,6 +225,7 @@ def readAccountsByUserID(
 ):
     accounts = crud.getAccounts(db=db, userID=userID["id"], skip=skip, limit=limit)
     return accounts
+#Gets all accounts from the database using the UserID specified by the user using the getAccounts function
 
 
 # Gets a specific account from the database using the UserID specified by the user using the getAccounts function
@@ -224,6 +247,12 @@ def readAccountByType(
 
 # Gets a specific account type from the database by a specified userID and accountType, if no account is found
 # displays an error message
+
+@app.delete("/accounts/{account_number}", tags=["Accounts"])
+def delete_account(account_number: int, userID: userDependency, db: Session = Depends(getDB)):
+
+    crud.delete_account(db=db, userID=userID['id'], account_number=account_number)
+    return {"message": "Account deleted successfully"}
 
 
 # DEPOSIT/WITHDRAW
