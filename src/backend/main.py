@@ -159,6 +159,11 @@ def deleteUser(user: userDependency, response_model=schemas.userDelete, db: Sess
     dbUser = crud.getUser(db, user["id"])
     if dbUser is None:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # delete the accounts associated with the user
+    accounts = crud.getAccounts(db, user["id"])
+    for account in accounts:
+        db.delete(account)
 
     db.delete(dbUser)
     db.commit()
