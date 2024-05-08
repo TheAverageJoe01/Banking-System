@@ -1,0 +1,45 @@
+@startuml
+left to right direction
+
+package "Server" {
+  node "API" {
+    component "API Router" {
+      [Create User]
+      [Read User]
+      [Edit Email]
+      [Delete User]
+      [Login]
+      [Create Account]       
+      [Read Account By User]
+      [Read Account By Type]
+      [Delete Account]
+      [Deposit]
+      [Withdraw]
+      [Transactions]
+      [Get Transactions]
+    }
+    
+  }
+
+  database "BankDB" {
+    [User Table]
+    [Account Table]
+    [Transaction Table]
+  }
+}
+
+package "Client" {
+  [Login Page]
+  [Home Page]
+  [Account Page]
+  [Transaction List Page]
+  [Deposit page]
+  [Withdaw Page]
+  [Transfer page]
+}
+
+[Server] <--> [Client]: Client Interaction
+[BankDB] <--> [API]: Database Interaction
+
+
+@enduml
