@@ -18,6 +18,7 @@ function Home() {
     const [showUserOverlay, setShowUserOverlay] = useState(false);
     const handleCloseModal = () => setShowModal(false);
     const handleShowModal = () => setShowModal(true);
+    const [editingUser, setEditingUser] = useState(false);
 
     const handleCreateAccount = async () => {
         try {
@@ -46,13 +47,12 @@ function Home() {
                 throw new Error('Failed to create account');
             }
             navigate(`/account/${newAccountType}`);
-            // Account created successfully, close the modal and potentially update UI
+            // Account created successfully
             handleCloseModal();
 
-            // Optionally, you can update the UI to reflect the new account
         } catch (error) {
             console.error('Error creating account:', error);
-            // Handle error, display error message to the user, etc.
+            // Handle error
         }
     };
 
@@ -103,7 +103,7 @@ function Home() {
             }
         };
         verifyToken();
-    }, [navigate]);
+    }, [navigate, editingUser]);
 
     const handleSelect = (eventKey) => {
         setSelectedValue(eventKey);
@@ -131,88 +131,142 @@ function Home() {
         navigate('/')
     };
 
-  
+    const handleEditUser = () => {
+        setEditingUser(true)
+    }
+    const handleSaveEdit = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const newUsername = document.getElementById('newUsername').value;
+            
+            const response = await fetch('http://localhost:8000/users/', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    email: newUsername,
+                    password: "string" // This does not get passed through to backend but is required by request body
+                })
+            });
 
-    return (
-        <Container>
-            <Container className="d-flex align-items-center p-3">
-                <FaUser size={36} className="mr-2" style={{ marginRight: '10px', cursor: 'pointer' }} onClick={toggleUserOverlay} id="user-icon" />
-                <h2>{username}</h2>
-            </Container>
-            <Container className="d-flex justify-content-center align-items-center vh-100">
-                <Overlay
-                    show={showUserOverlay}
-                    target={document.getElementById("user-icon")}
-                    placement="bottom"
-                >
-                    <Popover id="popover-contained">
-                        <Popover.Header as="h3">User Information</Popover.Header>
-                        <Popover.Body>
-                            <Button variant="secondary" onClick={null} style={{ marginRight: '10px' }}>
-                                Edit User
-                            </Button>
-                            <Button variant="danger" onClick={handleLogout}>
-                                Logout
-                            </Button>
-                        </Popover.Body>
-                    </Popover>
-                </Overlay>
+            if (!response.ok) {
+                alert("Failed to change email!");
+                throw new Error('Failed to change email')
+            }
 
-                <div className="d-flex flex-column align-items-center">
-                    <h2>Home</h2>
-                    <Button variant="success" onClick={handleShowModal} style={{ width: '200px' }} className="mb-3">
-                        Create New Account
-                    </Button>
+            const data = await response.json();
 
-                    <Modal show={showModal} onHide={handleCloseModal}>
-                        <Modal.Header closeButton>
-                            <Modal.Title>Create New Account</Modal.Title>
-                        </Modal.Header>
-                        <Modal.Body>
-                            <Form>
-                                <Form.Group controlId="formAccountType">
-                                    <Form.Label>Account Type</Form.Label>
-                                    <Form.Control as="select" value={newAccountType} onChange={(e) => setNewAccountType(e.target.value)}>
-                                        <option value="" disabled>Select Account</option>
-                                        <option value="Savings">Savings</option>
-                                        <option value="Current">Current</option>
-                                        <option value="Student">Student</option>
-                                    </Form.Control>
-                                </Form.Group>
-                            </Form>
-                        </Modal.Body>
-                        <Modal.Footer>
-                            <Button variant="secondary" onClick={handleCloseModal} style={{ width: '100px' }}>
-                                Close
-                            </Button>
-                            <Button variant="success" onClick={handleCreateAccount} style={{ width: '200px' }}>
-                                Create Account
-                            </Button>
-                        </Modal.Footer>
-                    </Modal>
+            if (response.ok) {
+                const { user, accessToken, refreshToken } = data;
+                localStorage.setItem('token', accessToken);
+                setUser(newUsername);
+                setEditingUser(false);
 
-                    <Dropdown as={ButtonGroup} onSelect={handleSelect} className="mb-3" size="lg">
-                        <Dropdown.Toggle variant="secondary" id="dropdown-basic" style={{ minWidth: '200px' }}>
-                            {selectedValue || "Select Account"}
-                        </Dropdown.Toggle>
+            }
+                
+            } catch (error) {
+                console.error('Error creating account:', error);
+                // Handle error
+            }
+        };
 
-                        <Dropdown.Menu>
-                            {items.map(item => (
-                                <Dropdown.Item key={item.accountNumber} eventKey={item.accountType}>
-                                    {item.accountType + " - " + item.accountNumber}
-                                </Dropdown.Item>
-                            ))}
-                        </Dropdown.Menu>
-                    </Dropdown>
-                    <div className="d-flex justify-content-end w-100">
-                        <Button className="btn btn-success" onClick={handleSubmit} size='sm'>
-                            View
+
+        return (
+            <Container>
+                <Container className="d-flex align-items-center p-3">
+                    <FaUser size={36} className="mr-2" style={{ marginRight: '10px', cursor: 'pointer' }} onClick={toggleUserOverlay} id="user-icon" />
+                    <h2>{username}</h2>
+                </Container>
+                <Container className="d-flex justify-content-center align-items-center vh-100">
+                    <Overlay
+                        show={showUserOverlay}
+                        target={document.getElementById("user-icon")}
+                        placement="bottom"
+                    >
+                        <Popover id="popover-contained">
+                            <Popover.Header as="h3">User Information</Popover.Header>
+                            <Popover.Body>
+                                {!editingUser ? (
+                                    <>
+                                        <Button variant="secondary" onClick={handleEditUser} style={{ marginRight: '10px' }}>
+                                            Edit User
+                                        </Button>
+                                        <Button variant="danger" onClick={handleLogout}>
+                                            Logout
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Form>
+                                        <Form.Group controlId="formEditUser">
+                                            <Form.Label>New Username/Email</Form.Label>
+                                            <Form.Control id="newUsername" type="text" placeholder="Enter new username/email" />
+                                            <Button variant="primary" size="sm" onClick={handleSaveEdit} style={{ marginTop: '10px' }}>
+                                                Submit
+                                            </Button>
+                                        </Form.Group>
+                                    </Form>
+                                )}
+                            </Popover.Body>
+                        </Popover>
+                    </Overlay>
+
+                    <div className="d-flex flex-column align-items-center">
+                        <h2>Home</h2>
+                        <Button variant="success" onClick={handleShowModal} style={{ width: '200px' }} className="mb-3">
+                            Create New Account
                         </Button>
-                    </div>
-                </div>
-            </Container>
-        </Container>
-    )
-}
 
-export default Home;
+                        <Modal show={showModal} onHide={handleCloseModal}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>Create New Account</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                <Form>
+                                    <Form.Group controlId="formAccountType">
+                                        <Form.Label>Account Type</Form.Label>
+                                        <Form.Control as="select" value={newAccountType} onChange={(e) => setNewAccountType(e.target.value)}>
+                                            <option value="" disabled>Select Account</option>
+                                            <option value="Savings">Savings</option>
+                                            <option value="Current">Current</option>
+                                            <option value="Student">Student</option>
+                                        </Form.Control>
+                                    </Form.Group>
+                                </Form>
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <Button variant="secondary" onClick={handleCloseModal} style={{ width: '100px' }}>
+                                    Close
+                                </Button>
+                                <Button variant="success" onClick={handleCreateAccount} style={{ width: '200px' }}>
+                                    Create Account
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
+
+                        <Dropdown as={ButtonGroup} onSelect={handleSelect} className="mb-3" size="lg">
+                            <Dropdown.Toggle variant="secondary" id="dropdown-basic" style={{ minWidth: '200px' }}>
+                                {selectedValue || "Select Account"}
+                            </Dropdown.Toggle>
+
+                            <Dropdown.Menu>
+                                {items.map(item => (
+                                    <Dropdown.Item key={item.accountNumber} eventKey={item.accountType}>
+                                        {item.accountType + " - " + item.accountNumber}
+                                    </Dropdown.Item>
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown>
+                        <div className="d-flex justify-content-end w-100">
+                            <Button className="btn btn-success" onClick={handleSubmit} size='sm'>
+                                View
+                            </Button>
+                        </div>
+                    </div>
+                </Container>
+            </Container>
+        )
+    }
+
+    export default Home;
