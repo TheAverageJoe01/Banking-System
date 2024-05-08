@@ -1,0 +1,17 @@
+What we need:
+Groups discussions - Talk about when we had them and what we discussed in those meetings with short summary (done)
+Trello board to show project planning (pretty much done)
+System design such as class diagrams, entity relations and use-case diagrams (needs doing)
+GUI design so show the wireframes, need the main page and another button page (assuming an example of one of the buttons)
+Link to github which contains the code, documentation, prototype and testing artefacts and a video of it working showing all features)
+Pair programming
+Implementation and testing
+
+What we are missing:
+Class diagram
+Use-case diagram
+Sequence diagram
+Component diagram (probs dont need all of them)
+GDPR compliancy? (last workshop, not sure if its required)
+SRC document needs finishing
+

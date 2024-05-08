@@ -7,7 +7,10 @@ import { Modal, Form } from 'react-bootstrap';
 
 
 function Home() {
+    // Navigation hook from react-router-dom to route effectively between pages
     const navigate = useNavigate();
+
+    // State variables
     const [username, setUser] = useState(null);
     const [id, setId] = useState(null);
     const [selectedValue, setSelectedValue] = useState('');
@@ -16,10 +19,12 @@ function Home() {
     const [showModal, setShowModal] = useState(false);
     const [newAccountType, setNewAccountType] = useState('');
     const [showUserOverlay, setShowUserOverlay] = useState(false);
+    const [editingUser, setEditingUser] = useState(false);
+    // open and close modal functions
     const handleCloseModal = () => setShowModal(false);
     const handleShowModal = () => setShowModal(true);
-    const [editingUser, setEditingUser] = useState(false);
 
+    // Function handles create account
     const handleCreateAccount = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -29,7 +34,7 @@ function Home() {
                 alert('Account of the same type already exists')
                 throw new Error('Account of the same type already exists');
             }
-
+            // Create new account fetching to make HTTP request
             const response = await fetch('http://localhost:8000/accounts/', {
                 method: 'POST',
                 headers: {
@@ -46,16 +51,18 @@ function Home() {
             if (!response.ok) {
                 throw new Error('Failed to create account');
             }
+            // redirect to new account page based on type
             navigate(`/account/${newAccountType}`);
             // Account created successfully
-            handleCloseModal();
+            handleCloseModal(); // close modal after account creation
 
         } catch (error) {
             console.error('Error creating account:', error);
             // Handle error
         }
     };
-
+    // Use effect hook used to perform side effects in function components
+    // Handles user token verification and account fetching
     useEffect(() => {
         const verifyToken = async () => {
             const token = localStorage.getItem('token');
@@ -63,24 +70,26 @@ function Home() {
                 navigate('/');
                 return;
             }
-
+            // Error handling
             try {
+                // Verify user token
                 const response = await fetch(`http://localhost:8000/verify-token/${token}`);
                 if (!response.ok) {
                     throw new Error('Token verification failed');
                 }
-
+                // Get user data and fetch accounts based on user id
                 const { username, id } = await response.json();
                 setUser(username);
                 setId(id);
                 fetchAccounts(id);
             } catch (error) {
                 console.error(error);
+                // if error remove token from local storage and navigate to login
                 localStorage.removeItem('token');
                 navigate('/');
             }
         };
-
+        // fetch user accounts
         const fetchAccounts = async () => {
             setIsLoading(true);
             try {
@@ -102,13 +111,14 @@ function Home() {
                 setIsLoading(false);
             }
         };
+        // calls the verifyToken function on first mount or when editingUser flag state changes
         verifyToken();
     }, [navigate, editingUser]);
-
+    // Function handles account selection from the dropdown
     const handleSelect = (eventKey) => {
         setSelectedValue(eventKey);
     };
-
+    // Function handles account selection navigation
     const handleSubmit = (event) => {
         event.preventDefault();
         if (selectedValue) {
@@ -119,26 +129,31 @@ function Home() {
         }
     };
 
-
+    // Render loading message when data loading
     if (isLoading) {
         return <p>Loading...</p>;
     }
 
+    // User icon toggle overlay
     const toggleUserOverlay = () => setShowUserOverlay(!showUserOverlay);
 
+    // user logout function
     const handleLogout = () => {
         localStorage.removeItem('token');
         navigate('/')
     };
 
+    // function to enable user editing from user icon
     const handleEditUser = () => {
         setEditingUser(true)
     }
+    // Function saves user email/username change 
     const handleSaveEdit = async () => {
         try {
             const token = localStorage.getItem('token');
             const newUsername = document.getElementById('newUsername').value;
             
+            // API request, Updates user email/username
             const response = await fetch('http://localhost:8000/users/', {
                 method: 'PUT',
                 headers: {
@@ -157,13 +172,12 @@ function Home() {
             }
 
             const data = await response.json();
-
+            // if response okay update access token in local storage and update username
             if (response.ok) {
                 const { user, accessToken, refreshToken } = data;
                 localStorage.setItem('token', accessToken);
                 setUser(newUsername);
                 setEditingUser(false);
-
             }
                 
             } catch (error) {
@@ -172,7 +186,7 @@ function Home() {
             }
         };
 
-
+        // Render component
         return (
             <Container>
                 <Container className="d-flex align-items-center p-3">

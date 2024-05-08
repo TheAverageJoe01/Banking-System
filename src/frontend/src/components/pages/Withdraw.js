@@ -5,20 +5,24 @@ import { GrTransaction } from "react-icons/gr";
 import { FaHome } from "react-icons/fa";
 
 function Withdraw() {
+    // Initialize variables
     const navigate = useNavigate();
     const { accountType } = useParams();
     const [accountDetails, setAccountDetails] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-
+    
+    // Function to handle withdrawal
     const handleWithdraw = async () => {
         try {
             const token = localStorage.getItem('token');
             const amount = parseFloat(document.getElementById('formBasicEmail').value);
 
+            // Check if the entered amount is valid
             if (isNaN(amount) || amount <= 0) {
                 throw new Error('Please enter a valid positive amount');
             }
 
+            // Send withdrawal request to the server
             const response = await fetch(`http://localhost:8000/accounts/withdraw/${accountDetails.accountNumber}?amount=${amount}`, {
                 method: 'POST',
                 headers: {
@@ -28,6 +32,7 @@ function Withdraw() {
 
             const data = await response.json();
 
+            //Throw error if response is not ok
             if (!response.ok) {
                 throw new Error(data.detail || 'Failed to withdraw amount');
             }
@@ -42,6 +47,7 @@ function Withdraw() {
         }
     };
 
+    // Function to verify token and fetch account detail
     useEffect(() => {
         const verifyTokenAndFetchAccount = async () => {
             const token = localStorage.getItem('token');
@@ -51,6 +57,7 @@ function Withdraw() {
             }
 
             try {
+                // Verify token
                 const response = await fetch(`http://localhost:8000/verify-token/${token}`);
                 if (!response.ok) {
                     throw new Error('Token verification failed');
@@ -62,11 +69,13 @@ function Withdraw() {
                         'Authorization': `Bearer ${token}`
                     }
                 });
-
+                
+                //Throw error if response is not ok
                 if (!responseAccounts.ok) {
                     throw new Error('Failed to fetch accounts');
                 }
 
+                // Find the account with the specified accountType
                 const accounts = await responseAccounts.json();
                 const matchedAccount = accounts.find(acc => acc.accountType === accountType);
                 if (matchedAccount) {
@@ -74,6 +83,7 @@ function Withdraw() {
                 } else {
                     throw new Error('No matching account found');
                 }
+            //Catch any errors and redirect to home page
             } catch (error) {
                 console.error(error);
                 navigate('/home');
@@ -85,7 +95,7 @@ function Withdraw() {
         verifyTokenAndFetchAccount();
     }, [navigate, accountType]);
 
-
+    // Display loading message while fetching account details
     if (isLoading) {
         return (
             <Container className="d-flex vh-100 justify-content-center align-items-center">
@@ -94,6 +104,7 @@ function Withdraw() {
         );
     }
 
+    // display if no account details found
     if (!accountDetails) {
         return (
             <Container className="d-flex vh-100 justify-content-center align-items-center">
@@ -102,6 +113,7 @@ function Withdraw() {
         );
     }
 
+    // Display withdrawal form
     return (
         <Container>
             <Container>
@@ -109,6 +121,7 @@ function Withdraw() {
                     <FaHome size={50} className="mr-2" />
                 </Link>
             </Container>
+            {/* Container for withdrawal form */}
             <Container className="d-flex flex-column vh-100 justify-content-center align-items-center">
                 <GrTransaction size={30} style={{ marginRight: '10px' }} />
                 <h1>Withdraw</h1>
