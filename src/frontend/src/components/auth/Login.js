@@ -6,6 +6,7 @@ import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 
 function Login() {
+  // State variables for username, name, password, error message, loading state, and modal visibility
   const [username, setUsername] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -13,12 +14,16 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
 
+  // Functions to handle modal 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
+  // Navigation function
   const navigate = useNavigate();
 
+  // Form validation function for login
   const validateForm = () => {
+    // Check if username and password are not empty
     if (!username || !password) {
       setError('Username and password are required');
       return false;
@@ -27,6 +32,7 @@ function Login() {
     return true;
   };
 
+  // Form validation function for user creation
   const validateCreateForm = () => {
     if (!name || !username || !password) {
       setError('Username and password are required');
@@ -36,15 +42,18 @@ function Login() {
     return true;
   };
 
+  // Function to handle login form submission
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validateForm()) return;
     setLoading(true);
 
+    // Create form data
     const formDetails = new URLSearchParams();
     formDetails.append('username', username);
     formDetails.append('password', password);
 
+    // Send login request to the server
     try {
       const response = await fetch('http://localhost:8000/token', {
         method: 'POST',
@@ -56,11 +65,13 @@ function Login() {
 
       setLoading(false);
 
+      // Handle response
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('token', data.access_token);
         navigate('/home');
       } else {
+        // Handle error
         const errorData = await response.json();
         setError(errorData.detail || 'Authentication failed!');
       }
@@ -70,11 +81,13 @@ function Login() {
     }
   };
 
+  // Function to handle user creation form submission
   const handleCreateUser = async (event) => {
     event.preventDefault();
     if (!validateCreateForm()) return;
     setLoading(true);
 
+    // Create user data
     const userData = {
       name: name,
       email: username,
@@ -82,6 +95,7 @@ function Login() {
     };
 
     try {
+      // Send user creation request to the server
       const response = await fetch('http://localhost:8000/users/', {
         method: 'POST',
         headers: {
@@ -96,6 +110,7 @@ function Login() {
         window.location.reload();
       }
     } catch (error) {
+      // Handle error
       console.error("Error:", error);
       setLoading(false);
       setError('An error occurred. Please try again later.');
@@ -107,6 +122,7 @@ function Login() {
       <Container className="d-flex vh-100 justify-content-center align-items-center">
         <Form onSubmit={handleSubmit}>
           <h1 className='d-flex justify-content-center'>Welcome to Big Bank</h1>
+          {/* Login Form */}
           <Form.Group className="mb-3" controlId="formBasicUsername">
             <Form.Label>Username</Form.Label>
             <Form.Control type="username" placeholder="Enter username" value={username}
@@ -131,6 +147,7 @@ function Login() {
               Create User
             </Button>
           </Container>
+          {/* User Creation Modal */}
           {error && <p style={{ color: 'red' }}>{error}</p>}
           <Modal show={show} onHide={handleClose}>
             <Modal.Header closeButton>

@@ -9,9 +9,10 @@ import Transfer from './components/pages/Transfer';
 import Transactions from './components/pages/Transactions';
 
 function App() {
-  
+// Main component routes for different pages of banking application
   return (
     <Router>
+      {/* Setting up routes */}
       <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/home" element={<Home />} />
